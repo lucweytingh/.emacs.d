@@ -6,7 +6,6 @@
 /repos/
 /straight/
 
-
 ### WHITELIST
 # Track this file
 !.gitignore
