@@ -1,0 +1,14 @@
+﻿# Ignore everything by default: setup whitelisting
+*
+!*/
+
+
+# Track this file
+!.gitignore
+
+# Base config files
+!README.org
+!init.el
+
+# Dashboard img
+!spree.png
