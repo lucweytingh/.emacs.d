@@ -1163,19 +1163,22 @@ even beep.)"
 
 ** indent rigidly (move selected regions)
 #+BEGIN_SRC emacs-lisp
-(setq indent-rigidly-map
-      (let ((map (make-sparse-keymap)))
-        (define-key map (kbd "C-p") 'drag-stuff-up)
-        (define-key map (kbd "C-n") 'drag-stuff-down)
-        (define-key map (kbd "C-f") 'drag-stuff-right)
-        (define-key map (kbd "C-b") 'drag-stuff-left)
-        (define-key map [left]  'indent-rigidly-left)
-        (define-key map (kbd "C-M-b")  'indent-rigidly-left)
-        (define-key map [right] 'indent-rigidly-right)
-        (define-key map (kbd "C-M-f") 'indent-rigidly-right)
-        (define-key map [S-right] 'indent-rigidly-right-to-tab-stop)
-        map)
-      )
+(use-package drag-stuff
+  :straight t  ; Ensure the drag-stuff package is installed
+  :config
+  (drag-stuff-global-mode 1)  ; Enable drag-stuff globally if needed
+  ;; Define a new global keymap for indenting and dragging
+  (setq indent-rigidly-map (let ((map (make-sparse-keymap)))
+                             (define-key map (kbd "C-p") 'drag-stuff-up)
+                             (define-key map (kbd "C-n") 'drag-stuff-down)
+                             (define-key map (kbd "C-f") 'drag-stuff-right)
+                             (define-key map (kbd "C-b") 'drag-stuff-left)
+                             (define-key map [left]  'indent-rigidly-left)
+                             (define-key map (kbd "C-M-b")  'indent-rigidly-left)
+                             (define-key map [right] 'indent-rigidly-right)
+                             (define-key map (kbd "C-M-f") 'indent-rigidly-right)
+                             (define-key map [S-right] 'indent-rigidly-right-to-tab-stop)
+                             map)))
 #+END_SRC
 
 #+RESULTS:
