@@ -36,9 +36,8 @@ Change title notes and banner on startup screen
   (defun my-dashboard-notes (list-size)
     (insert "remember:
   C-M-r		move region inwards
-
   C-M-;		copy and comment
-  M-s M-s       occur selection (search through buffer)
+  M-s M-s occur selection (search through buffer)
   C-c e u	unfill paragraph
   "))
 
