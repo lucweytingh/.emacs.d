@@ -28,6 +28,22 @@ new user
 (setq my-blacken-executable (concat my-user-path ".local/bin/black"))
 #+END_SRC
 
+
+
+** os specific
+#+BEGIN_SRC emacs-lisp
+; For unix:
+(prefer-coding-system 'utf-8-unix)
+(setq-default buffer-file-coding-system 'utf-8-unix)
+
+;; ; For windows and mac:
+;; (prefer-coding-system 'utf-8)
+;; (setq-default buffer-file-coding-system 'utf-8-auto-unix)
+#+END_SRC
+
+#+RESULTS:
+: utf-8-auto-unix
+
 ** startup screen
 Change title notes and banner on startup screen
 #+BEGIN_SRC emacs-lisp
@@ -49,10 +65,9 @@ Change title notes and banner on startup screen
   ;; Start fullscreen (cross-platf)
   (add-hook 'window-setup-hook 'toggle-frame-fullscreen t)
 
-  ;; (require 'benchmark-init)
-  ;; To disable collection of benchmark data after init is done.
-  ;; (add-hook 'after-init-hook 'benchmark-init/deactivate)
 #+END_SRC
+
+#+RESULTS:
 
 ** disable defaults
 #+BEGIN_SRC emacs-lisp
@@ -70,15 +85,6 @@ Change title notes and banner on startup screen
               inhibit-splash-screen t
               initial-scratch-message "")
 #+END_SRC
-
-** set coding system
-#+BEGIN_SRC emacs-lisp
-(prefer-coding-system 'utf-8)
-(setq-default buffer-file-coding-system 'utf-8-auto-unix)
-#+END_SRC
-
-#+RESULTS:
-: utf-8-auto-unix
 
 ** startup screen
 #+BEGIN_SRC emacs-lisp
@@ -589,7 +595,6 @@ instead of a new window.
     (define-key map (kbd "RET") 'ibuffer-visit-buffer)
     map))
 #+END_SRC
-
 ** minibuffer
 Copied from Jeroens config
 TODO: check the added benefit
