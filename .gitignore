@@ -16,3 +16,7 @@
 
 # Dashboard img
 !spree.png
+
+# Snippets
+!snippets/
+!snippets/**/*
