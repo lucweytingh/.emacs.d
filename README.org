@@ -462,6 +462,15 @@ to blacklist all i /don't/ want. for that, there exists =rich-minority=:
 
 
 * default behavior
+** smooth scrolling
+# Native smooth scrolling since Emacs 29
+#+BEGIN_SRC emacs-lisp
+(pixel-scroll-precision-mode 1)
+#+END_SRC
+
+#+RESULTS:
+: t
+
 ** save last pointer location per file
 #+BEGIN_SRC emacs-lisp
 (save-place-mode 1)
@@ -1762,6 +1771,16 @@ enables centered editing
 #+END_SRC
 
 
+** project management
+#+BEGIN_SRC emacs-lisp
+(use-package projectile
+  :straight t
+  :config
+  (projectile-mode +1)
+  (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map))
+#+END_SRC
+
+* major modes
 ** org mode
 *** default template
 Auto-insert when opening file with certain suffix.
@@ -2030,8 +2049,6 @@ python-shell-interpreter-args "-c exec('__import__(\\'readline\\')') -i")
 
 
 *** blacken (auto-formatting)
-use-package doesn't seem to work with blacken
-
 #+BEGIN_SRC emacs-lisp
 (use-package blacken
   :if my-blacken-executable
@@ -2126,6 +2143,13 @@ improves this behaviour.
              ("(python-reference)Index" nil "")))
 #+END_SRC
 
+*** flycheck
+#+BEGIN_SRC emacs-lisp
+(use-package flycheck
+  :straight t
+  :init
+  (global-flycheck-mode t))
+#+END_SRC
 ** latex
 *** default behaviour
 **** general
@@ -2362,8 +2386,8 @@ math mode already. We need to adapt the =yank-handled-properties= variable
   (setq js-indent-level 4)
   ;; patch in basic private field support
   (advice-add #'js2-identifier-start-p
-            :after-until
-            (lambda (c) (eq c ?#))))
+              :after-until
+              (lambda (c) (eq c ?#))))
 
 (add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
 
@@ -2391,9 +2415,9 @@ math mode already. We need to adapt the =yank-handled-properties= variable
                               company-pseudo-tooltip-unless-just-one-frontend-with-delay
                               company-preview-frontend))
     (define-key company-active-map [tab]
-      'company-select-next-if-tooltip-visible-or-complete-selection)
+                'company-select-next-if-tooltip-visible-or-complete-selection)
     (define-key company-active-map (kbd "TAB")
-      'company-select-next-if-tooltip-visible-or-complete-selection))
+                'company-select-next-if-tooltip-visible-or-complete-selection))
 
   (company-ac-setup)
   (add-hook 'js2-mode-hook (lambda () (company-mode)))
@@ -2423,3 +2447,109 @@ math mode already. We need to adapt the =yank-handled-properties= variable
 
 #+RESULTS:
 : js-format-buffer
+
+
+** shaders
+
+#+BEGIN_SRC emacs-lisp
+;; ;; Install and configure glsl-mode using use-package with straight.el
+;; (use-package glsl-mode
+;;   :straight t
+;;   :mode ("\\.frag\\'" . glsl-mode)
+;;   :hook ((glsl-mode . (lambda () (local-set-key (kbd "C-c C-c") 'glsl-viewer-toggle)))))
+
+;; (provide 'init-glsl)
+
+;; (use-package vterm
+;;   :straight t)
+
+
+;; (defun glsl-viewer-toggle ()
+;;   "Start or reload glslViewer in vterm to live view GLSL shader."
+;;   (interactive)
+;;   (let ((file (buffer-file-name)))
+;;     (if file
+;;         (progn
+;;           (save-buffer)
+;;           (let ((vterm-buffer (get-buffer "*glslViewer*")))
+;;             (if vterm-buffer
+;;                 (with-current-buffer vterm-buffer
+;;                   (vterm-send-string (concat "glslViewer " file))
+;;                   (vterm-send-return))
+;;               (setq vterm-buffer (get-buffer-create "*glslViewer*"))
+;;               (with-current-buffer vterm-buffer
+;;                 (vterm-mode)
+;;                 (vterm-send-string (concat "glslViewer " file))
+;;                 (vterm-send-return)))))
+;;       (message "Buffer is not visiting a file"))))
+
+;; (add-hook 'after-save-hook
+;;           (lambda ()
+;;             (when (eq major-mode 'glsl-mode)
+;;               (glsl-viewer-toggle))))
+#+END_SRC
+
+* c++
+#+BEGIN_SRC emacs-lisp
+(use-package modern-cpp-font-lock
+  :straight t)
+
+(defun code-compile ()
+  (interactive)
+  (unless (file-exists-p "Makefile")
+    (set (make-local-variable 'compile-command)
+     (let ((file (file-name-nondirectory buffer-file-name)))
+       (format "%s -o %s %s"
+           (if  (equal (file-name-extension file) "cpp") "g++" "gcc" )
+           (file-name-sans-extension file)
+           file)))
+    (compile compile-command)))
+
+(global-set-key [f9] 'code-compile)
+
+
+
+(use-package irony
+  :straight t
+  :config
+  (progn
+    ;; If irony server was never installed, install it.
+    (unless (irony--find-server-executable) (call-interactively #'irony-install-server))
+
+    (add-hook 'c++-mode-hook 'irony-mode)
+    (add-hook 'c-mode-hook 'irony-mode)
+
+    ;; Use compilation database first, clang_complete as fallback.
+    (setq-default irony-cdb-compilation-databases '(irony-cdb-libclang
+                                                      irony-cdb-clang-complete))
+
+    (add-hook 'irony-mode-hook 'irony-cdb-autosetup-compile-options)
+  ))
+
+  ;; I use irony with company to get code completion.
+  (use-package company-irony
+    :straight t
+    :after company irony
+    :config
+    (progn
+      (eval-after-load 'company '(add-to-list 'company-backends 'company-irony))))
+
+  ;; I use irony with flycheck to get real-time syntax checking.
+  (use-package flycheck-irony
+    :straight t
+    :after flycheck irony
+    :config
+    (progn
+      (eval-after-load 'flycheck '(add-hook 'flycheck-mode-hook #'flycheck-irony-setup))))
+
+  ;; Eldoc shows argument list of the function you are currently writing in the echo area.
+  (use-package irony-eldoc
+    :straight t
+    :after eldoc irony
+    :config
+    (progn
+      (add-hook 'irony-mode-hook #'irony-eldoc)))
+#+END_SRC
+
+#+RESULTS:
+: t
