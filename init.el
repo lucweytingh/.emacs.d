@@ -1,4 +1,4 @@
-;; ;; Increase gc to 500MB for quick & easy startup
+;; Increase gc to 500MB for quick & easy startup
 (setq gc-cons-threshold (* 1000 1024 1024))
 
 ;; https://emacs.stackexchange.com/questions/34342/is-there-any-downside-to-setting-gc-cons-threshold-very-high-and-collecting-ga
