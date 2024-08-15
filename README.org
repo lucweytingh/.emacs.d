@@ -1149,7 +1149,17 @@ even beep.)"
   (global-set-key (kbd "C-,") 'mc/mark-previous-like-this)
   (global-set-key (kbd "C-M-,") 'mc/unmark-next-like-this)
   (global-set-key (kbd "C-M-.") 'mc/unmark-previous-like-this)
-  (global-set-key (kbd "C-c C-,") 'mc/mark-all-like-this))
+  (global-set-key (kbd "C-c C-,") 'mc/mark-all-like-this)
+  (add-hook 'org-mode-hook
+          (lambda ()
+            (define-key org-mode-map (kbd "C-.") 'mc/mark-next-like-this)
+            (define-key org-mode-map (kbd "C-,") 'mc/mark-previous-like-this)
+            (define-key org-mode-map (kbd "C-M-,") 'mc/unmark-next-like-this)
+            (define-key org-mode-map (kbd "C-M-.") 'mc/unmark-previous-like-this)
+            (define-key org-mode-map (kbd "C-c C-,") 'mc/mark-all-like-this)
+            )
+          )
+  )
 
 ;; (define-key mc/keymap (kbd "<return>") nil)
 
@@ -1857,7 +1867,7 @@ Auto-insert when opening file with certain suffix.
                                ;; (visual-fill-column-mode)
                                (org-bullets-mode)
                                (org-indent-mode)
-                               (flyspell-mode)
+                               ;; (flyspell-mode)
                                (wrap-region-add-wrapper "=" "=")
                                (wrap-region-add-wrapper "" "")
                                (wrap-region-add-wrapper "+" "+")
@@ -2155,6 +2165,9 @@ improves this behaviour.
   :init
   (global-flycheck-mode t))
 #+END_SRC
+
+#+RESULTS:
+
 ** latex
 *** default behaviour
 **** general
