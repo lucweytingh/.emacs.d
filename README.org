@@ -28,6 +28,13 @@ new user
 (setq my-blacken-executable (concat my-user-path ".local/bin/black"))
 #+END_SRC
 
+Find the blacken executable path by running
+#+BEGIN_SRC shell
+which black
+#+END_SRC
+
+#+RESULTS:
+: .local/bin/black
 
 
 ** os specific
