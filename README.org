@@ -15,8 +15,6 @@ Then, open a terminal, cd to this directory and run
 ./install_macosx.sh
 #+END_SRC
 
-Then update the variables in the "user-specific" section below
-
 ** linux
 Install emacs 29 by running
 #+BEGIN_SRC shell
@@ -29,7 +27,12 @@ Then cd to this directory and run
 ./install_linux.sh
 #+END_SRC
 
-Then update the variables in the "user-specific" section below
+** afterwards, for both linux and mac
+Update the variables in the "user-specific" section below
+
+Run M-x jedi:install-server to setup autocompletion for python
+
+
 
 * user specific
 settings that should be reconfigured if this config is transferred to a
