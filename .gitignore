@@ -19,3 +19,5 @@
 # Snippets
 !snippets/
 !snippets/**/*
+
+!repos/**/*
