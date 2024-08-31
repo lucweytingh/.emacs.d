@@ -61,7 +61,7 @@ which black
 #+END_SRC
 
 #+RESULTS:
-: .local/bin/black
+: ~/.local/bin/black
 
 
 ** os specific
