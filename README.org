@@ -81,24 +81,24 @@ C-c C-m    avy-move-region
 * startup
 ** enable full screen
 #+BEGIN_SRC emacs-lisp
-    ;; Start fullscreen (cross-platf)
-    ;; (add-hook 'window-setup-hook 'toggle-frame-fullscreen t)
+  ;; Start fullscreen (cross-platf)
+  (add-hook 'window-setup-hook 'toggle-frame-fullscreen t)
 
-    ;; (require 'benchmark-init)
-    ;; To disable collection of benchmark data after init is done.
-    ;; (add-hook 'after-init-hook 'benchmark-init/deactivate)
+  ;; (require 'benchmark-init)
+  ;; To disable collection of benchmark data after init is done.
+  ;; (add-hook 'after-init-hook 'benchmark-init/deactivate)
 
-    ;; Because of dead pixels, set the screen to be smaller than fullscreen
+  ;; Because of dead pixels, set the screen to be smaller than fullscreen
 
-    ;; (progn
-    ;;   (setq ns-auto-hide-menu-bar t)
-    ;;   (tool-bar-mode 0)
-    ;;   (set-frame-size nil 242 63)
-    ;;   (set-frame-position nil 0 -33))
+  ;; (progn
+  ;;   (setq ns-auto-hide-menu-bar t)
+  ;;   (tool-bar-mode 0)
+  ;;   (set-frame-size nil 242 63)
+  ;;   (set-frame-position nil 0 -33))
 
 
-  (progn
-    (set-frame-size (selected-frame) 162 46))    ;; Set the frame position (x, y)
+(progn
+  (set-frame-size (selected-frame) 162 46))    ;; Set the frame position (x, y)
 
 #+END_SRC
 
@@ -320,7 +320,8 @@ define functions to switch between light and dark modes
 
 *** additional options
 #+BEGIN_SRC emacs-lisp
-(set-face-attribute 'region nil :background (doom-darken "#c792ea" 0.6) :foreground nil) ;; "#ffffff")
+  (set-face-attribute 'region nil :background (doom-darken "#c792ea" 0.6) :foreground nil)
+  ;; "#ffffff"
 #+END_SRC
 
 #+RESULTS:
@@ -401,102 +402,103 @@ to blacklist all i /don't/ want. for that, there exists =rich-minority=:
 *** hide mode-line, put at header-line spot
 
 #+BEGIN_SRC emacs-lisp
-;; status-icon to the left of filename
-(defun render-mode-line-status-icon (read-only modified)
-  (if read-only
-      ""
-    (if modified
-        " ●"
-        " ○"
-      )))
-(defun render-mode-line-remote (remote)
-  (if remote
-      " @"
-    ""))
+  ;; status-icon to the left of filename
+  (defun render-mode-line-status-icon (read-only modified)
+    (if read-only
+  ""
+      (if modified
+    " ●"
+    " ○"
+  )))
+  (defun render-mode-line-remote (remote)
+    (if remote
+  " @"
+      ""))
 
 
-;; mode-line section on left of screen
-(setq mode-line-left-section
-      (list
-       ;; day and time
-       ;; '(:eval (propertize (format-time-string " %b %d %H:%M ")
-       ;;                     'face 'font-lock-builtin-face))
+  ;; mode-line section on left of screen
+  (setq mode-line-left-section
+  (list
+   ;; day and time
+   ;; '(:eval (propertize (format-time-string " %b %d %H:%M ")
+   ;;                     'face 'font-lock-builtin-face))
 
-       ;; buffer status icon (dot)
-       '(:eval (render-mode-line-status-icon buffer-read-only (buffer-modified-p)))
-       ;; (render-mode-line-remote mode-line-remote)
+   ;; buffer status icon (dot)
+   '(:eval (render-mode-line-status-icon buffer-read-only (buffer-modified-p)))
+   ;; (render-mode-line-remote mode-line-remote)
 
-       ;; the buffer name; the file name as a tool tip
-       '(:eval (propertize " %b "
-                           'help-echo (buffer-file-name)))
+   ;; the buffer name; the file name as a tool tip
+   '(:eval (propertize " %b "
+           'help-echo (buffer-file-name)))
 
-       ;; relative position, size of file
-       ;; " ["
-       ;; (propertize "%p" 'face 'font-lock-constant-face) ;; % above top
-       ;; "/"
-       ;; (propertize "%I" 'face 'font-lock-constant-face) ;; size
-       ;; "] "
-       ))
+   ;; relative position, size of file
+   ;; " ["
+   ;; (propertize "%p" 'face 'font-lock-constant-face) ;; % above top
+   ;; "/"
+   ;; (propertize "%I" 'face 'font-lock-constant-face) ;; size
+   ;; "] "
+   ))
 
-;; mode-line section on right of screen
-(setq mode-line-right-section
-      (list
-       ;; git branch
-       ;; '(:eval (propertize (substring vc-mode 5)))
-                           ;; 'face 'font-lock-comment-face))
+  ;; mode-line section on right of screen
+  (setq mode-line-right-section
+  (list
+   ;; git branch
+   ;; '(:eval (propertize (substring vc-mode 5)))
 
-       ;; line and column
-       " [" ;; '%02' to set to 2 chars at least; prevents flickering
-       (propertize "%02l" 'face 'font-lock-comment-face) ":"
-       (propertize "%02c" 'face 'font-lock-comment-face)
-       "] "
-       ;; (propertize org-mode-line-string 'face '(:foreground "#5DD8FF"))
+   ;; 'face 'font-lock-comment-face))
 
-       ;; the current major mode
-       (propertize " %m" 'face 'font-lock-comment-face)
-       " "
-       ;; rich-minority minor modes
-       ;; rm--mode-line-construct
-       "  "
-       ))
+   ;; line and column
+   " [" ;; '%02' to set to 2 chars at least; prevents flickering
+   (propertize "%02l" 'face 'font-lock-comment-face) ":"
+   (propertize "%02c" 'face 'font-lock-comment-face)
+   "] "
+   ;; (propertize org-mode-line-string 'face '(:foreground "#5DD8FF"))
 
-(defun mode-line-render ()
-  (append (append mode-line-left-section
-                  (list
-                   ;; function to right-justify part of modeline
-                   ;; by filling center with spaces
-                   '(:eval (s-repeat
-                            (- (+ (window-total-width) 0)
-                               (+
-                                (length (format-mode-line mode-line-right-section))
-                                (length (format-mode-line mode-line-left-section))))
-                            " "))
-                   )
-                  mode-line-right-section)))
+   ;; the current major mode
+   (propertize " %m" 'face 'font-lock-comment-face)
+   " "
+   ;; rich-minority minor modes
+   ;; rm--mode-line-construct
+   "  "
+   ))
+
+  (defun mode-line-render ()
+    (append (append mode-line-left-section
+        (list
+         ;; function to right-justify part of modeline
+         ;; by filling center with spaces
+         '(:eval (s-repeat
+            (- (+ (window-total-width) 0)
+         (+
+          (length (format-mode-line mode-line-right-section))
+          (length (format-mode-line mode-line-left-section))))
+            " "))
+         )
+        mode-line-right-section)))
 
 
-;; actually render the mode-line
-;; (setq-default mode-line-format (mode-line-render))
+  ;; actually render the mode-line
+  ;; (setq-default mode-line-format (mode-line-render))
 
-;; move modeline to the top of the buffer
-(setq-default header-line-format (mode-line-render))
-;; (setq-default mode-line-format'(""))
-;; hide empty mode-line
-(setq-default mode-line-format nil)
+  ;; move modeline to the top of the buffer
+  (setq-default header-line-format (mode-line-render))
+  ;; (setq-default mode-line-format'(""))
+  ;; hide empty mode-line
+  (setq-default mode-line-format nil)
 
-;; reduce height of empty mode-line
-(set-face-attribute 'mode-line nil :foreground "white" :background nil :box nil :overline "#1e212e")
-(set-face-attribute 'mode-line-inactive nil :background nil :box nil :foreground "#232635" :overline "#1e212e")
+  ;; reduce height of empty mode-line
+  (set-face-attribute 'mode-line nil :foreground "white" :background nil :box nil :overline "#1e212e")
+  (set-face-attribute 'mode-line-inactive nil :background nil :box nil :foreground "#232635" :overline "#1e212e")
 
-(set-face-attribute 'vertical-border nil :background nil :foreground "#676E95")
+  (set-face-attribute 'vertical-border nil :background nil :foreground "#676E95")
 
-;; decorate header-line
-(set-face-attribute 'header-line nil
-                    :background "#1c1f2b"
-                    :foreground "#EEFFFF"
-                    :box '(:line-width 5 :color "#1c1f2b")
-                    :overline nil
-                    :underline nil)
+  ;; decorate header-line
+  (set-face-attribute 'header-line nil
+          :background "#1c1f2b"
+          :foreground "#EEFFFF"
+          :box '(:line-width 5 :color "#1c1f2b")
+          :overline nil
+          :underline nil)
 #+END_SRC
 
 #+RESULTS:
