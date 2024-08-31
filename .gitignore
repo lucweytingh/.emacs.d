@@ -9,6 +9,9 @@
 # Track this file
 !.gitignore
 
+# Installation files
+!install_macosx.sh
+
 # Base config files
 !README.org
 !init.el
@@ -20,4 +23,5 @@
 !snippets/
 !snippets/**/*
 
+# Prot-files
 !repos/**/*
