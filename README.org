@@ -64,23 +64,41 @@ new user
 ** startup screen
 Change title notes and banner on startup screen
 #+BEGIN_SRC emacs-lisp
-  (setq my-dashboard-title "lmacs")
-  (setq my-dashboard-banner "~/.emacs.d/spree.png")
-  (defun my-dashboard-notes (list-size)
-    (insert "remember:
-  C-M-r		move region inwards
-  C-M-;		copy and comment
-  M-s M-s occur selection (search through buffer)
-  C-c e u	unfill paragraph
-  "))
+(setq my-dashboard-title "lmacs")
+(setq my-dashboard-banner "~/.emacs.d/spree.png")
+(defun my-dashboard-notes (list-size)
+(insert "remember:
+C-j        avy-goto-word-or-subword-1
+C-;        avy-goto-char-in-line
+C-c w      avy-copy-line
+C-c C-w    avy-copy-region
+C-c m      avy-move-line
+C-c C-m    avy-move-region
+"))
 
 #+END_SRC
 
 * startup
 ** enable full screen
 #+BEGIN_SRC emacs-lisp
-  ;; Start fullscreen (cross-platf)
-  (add-hook 'window-setup-hook 'toggle-frame-fullscreen t)
+    ;; Start fullscreen (cross-platf)
+    ;; (add-hook 'window-setup-hook 'toggle-frame-fullscreen t)
+
+    ;; (require 'benchmark-init)
+    ;; To disable collection of benchmark data after init is done.
+    ;; (add-hook 'after-init-hook 'benchmark-init/deactivate)
+
+    ;; Because of dead pixels, set the screen to be smaller than fullscreen
+
+    ;; (progn
+    ;;   (setq ns-auto-hide-menu-bar t)
+    ;;   (tool-bar-mode 0)
+    ;;   (set-frame-size nil 242 63)
+    ;;   (set-frame-position nil 0 -33))
+
+
+  (progn
+    (set-frame-size (selected-frame) 162 46))    ;; Set the frame position (x, y)
 
 #+END_SRC
 
