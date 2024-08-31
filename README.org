@@ -4,6 +4,31 @@
 
 mid 2024 emacs config luc
 
+* installation
+** mac
+Install emacs 29 from https://emacsformacosx.com/
+
+Then, open a terminal, cd to this directory and run
+#+BEGIN_SRC shell
+./install_macosx.sh
+#+END_SRC
+
+Then update the variables in the "user-specific" section below
+
+** linux
+Install emacs 29 by running
+#+BEGIN_SRC shell
+sudo add-apt-repository ppa:ubuntuhandbook1/emacs
+sudo apt install emacs emacs-common
+#+END_SRC
+
+Then cd to this directory and run
+#+BEGIN_SRC shell
+./install_linux.sh
+#+END_SRC
+
+Then update the variables in the "user-specific" section below
+
 * user specific
 settings that should be reconfigured if this config is transferred to a
 new user

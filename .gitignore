@@ -11,6 +11,7 @@
 
 # Installation files
 !install_macosx.sh
+!install_linux.sh
 
 # Base config files
 !README.org
