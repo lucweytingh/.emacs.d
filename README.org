@@ -5,6 +5,8 @@
 mid 2024 emacs config luc
 
 * installation
+Clone this repository in your user's home directory
+
 ** mac
 Install emacs 29 from https://emacsformacosx.com/
 
