@@ -30,6 +30,7 @@ Then cd to this directory and run
 ** afterwards, for both linux and mac
 Update the variables in the "user-specific" section below
 
+Run M-x elpy-rpc-reinstall-virtualenv to setup python development
 Run M-x jedi:install-server to setup autocompletion for python
 
 
