@@ -2585,7 +2585,7 @@ math mode already. We need to adapt the =yank-handled-properties= variable
 #+RESULTS:
 : t
 
-* c++
+** c++
 #+BEGIN_SRC emacs-lisp
 (use-package modern-cpp-font-lock
   :straight t)
@@ -2649,3 +2649,16 @@ math mode already. We need to adapt the =yank-handled-properties= variable
 
 #+RESULTS:
 : t
+
+** xml
+#+BEGIN_SRC emacs-lisp
+;; Configure nxml-mode (built-in)
+(use-package nxml-mode
+  :ensure nil  ;; `nxml-mode` is built-in, so no need to install
+  :mode ("\\.xml\\'" "\\.urdf\\'"))
+
+(provide 'init-xml)
+#+END_SRC
+
+#+RESULTS:
+: init-xml
