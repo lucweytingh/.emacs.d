@@ -2487,11 +2487,11 @@ math mode already. We need to adapt the =yank-handled-properties= variable
 ** shaders
 
 #+BEGIN_SRC emacs-lisp
-;; ;; Install and configure glsl-mode using use-package with straight.el
-;; (use-package glsl-mode
-;;   :straight t
-;;   :mode ("\\.frag\\'" . glsl-mode)
-;;   :hook ((glsl-mode . (lambda () (local-set-key (kbd "C-c C-c") 'glsl-viewer-toggle)))))
+;; Install and configure glsl-mode using use-package with straight.el
+(use-package glsl-mode
+  :straight t
+  :mode ("\\.frag\\'" . glsl-mode))
+  ;; :hook ((glsl-mode . (lambda () (local-set-key (kbd "C-c C-c") 'glsl-viewer-toggle)))))
 
 ;; (provide 'init-glsl)
 
@@ -2523,6 +2523,9 @@ math mode already. We need to adapt the =yank-handled-properties= variable
 ;;             (when (eq major-mode 'glsl-mode)
 ;;               (glsl-viewer-toggle))))
 #+END_SRC
+
+#+RESULTS:
+: t
 
 * c++
 #+BEGIN_SRC emacs-lisp
