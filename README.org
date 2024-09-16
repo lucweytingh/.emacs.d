@@ -1870,6 +1870,202 @@ enables centered editing
   (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map))
 #+END_SRC
 
+** NAP
+Includes functions for automating repeated NAP processes
+#+BEGIN_SRC emacs-lisp
+;; create an application
+(defvar nap-framework-dir nil
+  "The path to the NAP framework directory. It's unset by default and will prompt the user to set it.")
+
+(defun nap-set-framework-dir ()
+  "Prompt the user to set the NAP framework directory if it is not already set."
+  (unless nap-framework-dir
+    (setq nap-framework-dir
+          (read-directory-name "Set NAP framework directory: "))))
+
+(defun nap-create-app (app-name)
+  "Create a new NAP application with the given APP-NAME and show output in *NAP-output* buffer.
+If nap-framework-dir is not set, prompt the user to set it."
+  (interactive "sEnter the name of the application: ")
+  (nap-set-framework-dir)
+  (let ((default-directory nap-framework-dir)
+        (output-buffer (get-buffer-create "*NAP-output*")))
+    (with-current-buffer output-buffer
+      (erase-buffer))
+    (start-process-shell-command
+     "NAP-create-app" output-buffer
+     (concat "./tools/create_app.sh " app-name))
+    (pop-to-buffer output-buffer)
+    (message "Creating NAP application '%s'..." app-name)))
+
+;; build an application
+(defun nap-get-apps-directories ()
+  "Get a list of all directories in the 'apps' folder within nap-framework-dir."
+  (let ((apps-dir (concat (file-name-as-directory nap-framework-dir) "apps/")))
+    (directory-files apps-dir t "^[^.]" t)))
+
+(defun nap-build-app ()
+  "Build a selected NAP application by running its build.sh script.
+The user is prompted to choose from the available projects in the apps folder."
+  (interactive)
+  (nap-set-framework-dir)
+  (let* ((apps-dir (concat (file-name-as-directory nap-framework-dir) "apps/"))
+         (apps (nap-get-apps-directories))
+         (app-name (completing-read "Choose a NAP application to build: "
+                                    (mapcar #'file-name-nondirectory apps))))
+    (let ((app-build-script (concat apps-dir app-name "/build.sh"))
+          (output-buffer (get-buffer-create "*NAP-output*")))
+      (if (file-exists-p app-build-script)
+          (progn
+            (with-current-buffer output-buffer
+              (erase-buffer))
+            (start-process-shell-command
+             "NAP-build-app" output-buffer
+             (concat app-build-script))
+            (pop-to-buffer output-buffer)
+            (message "Building NAP application '%s'..." app-name))
+        (message "No build.sh script found for '%s'" app-name)))))
+
+(defun nap-get-demos-directories ()
+  "Get a list of all directories in the 'apps' folder within nap-framework-dir."
+  (let ((apps-dir (concat (file-name-as-directory nap-framework-dir) "demos/")))
+    (directory-files apps-dir t "^[^.]" t)))
+
+(defun nap-build-demo ()
+  "Build a selected NAP demo by running its build.sh script.
+The user is prompted to choose from the available projects in the demos folder."
+  (interactive)
+  (nap-set-framework-dir)
+  (let* ((demos-dir (concat (file-name-as-directory nap-framework-dir) "demos/"))
+         (demos (nap-get-demos-directories))
+         (demo-name (completing-read "Choose a NAP demo to build: "
+                                    (mapcar #'file-name-nondirectory demos))))
+    (let ((demo-build-script (concat demos-dir demo-name "/build.sh"))
+          (output-buffer (get-buffer-create "*NAP-output*")))
+      (if (file-exists-p demo-build-script)
+          (progn
+            (with-current-buffer output-buffer
+              (erase-buffer))
+            (start-process-shell-command
+             "NAP-build-demo" output-buffer
+             (concat demo-build-script))
+            (pop-to-buffer output-buffer)
+            (message "Building NAP demo '%s'..." demo-name))
+        (message "No build.sh script found for '%s'" demo-name)))))
+
+
+;; Launch an application
+(defun nap-get-executables-global ()
+  "Get a list of all executable files in the bin/Release-* directory of nap-framework-dir, excluding directories."
+  (let* ((release-dir (car (directory-files (concat nap-framework-dir "/bin/") t "^Release-")))
+         (files (and release-dir (directory-files release-dir t "^[^.].*"))))
+    (cl-remove-if (lambda (file)
+                    (or (file-directory-p file) (not (file-executable-p file))))
+                  files)))
+
+(defun nap-launch-app ()
+  "Launch a selected executable from the bin/Release-* folder in nap-framework-dir."
+  (interactive)
+  (nap-set-framework-dir)
+  (let ((executables (nap-get-executables-global)))
+    (if executables
+        (let* ((exec-choice (completing-read "Choose an executable to launch: "
+                                             (mapcar #'file-name-nondirectory executables)))
+               (exec-path (concat (file-name-as-directory (car (directory-files
+                                                               (concat nap-framework-dir "/bin/")
+                                                               t "^Release-"))) exec-choice))
+               (output-buffer (get-buffer-create "*NAP-output*")))
+          (with-current-buffer output-buffer
+            (erase-buffer))
+          (start-process-shell-command
+           "NAP-launch-app" output-buffer exec-path)
+          (pop-to-buffer output-buffer)
+          (message "Launching executable '%s'..." exec-choice))
+      (message "No executable files found in bin/Release-*."))))
+
+(defalias 'nap-run-app 'nap-launch-app)
+
+
+;; Using templates
+(defun nap-template-replace (placeholder replacement)
+  "Replace all occurrences of PLACEHOLDER with REPLACEMENT in the current buffer."
+  (save-excursion
+    (goto-char (point-min))
+    (while (search-forward placeholder nil t)
+      (replace-match replacement t))))
+
+(defun nap-template-insert-with-replace (file placeholder name)
+  "Insert the content of a template file, replace PLACEHOLDER with NAME, and replace ${NAME} with the file name."
+  (let ((template-path (expand-file-name (concat "templates/NAP/" file) user-emacs-directory))
+        (file-name-no-ext (file-name-sans-extension (buffer-name))))
+    (when (file-exists-p template-path)
+      (insert-file-contents template-path)
+      (nap-template-replace placeholder name)
+      (when (string-equal (file-name-extension (buffer-file-name)) "cpp")
+        (nap-template-replace "${NAME}" file-name-no-ext)))))
+
+(defun nap-prompt-template (file-type)
+  "Prompt the user to choose a template based on the FILE-TYPE ('cpp or 'h),
+and replace placeholders COMPONENT_NAME, RESOURCE_NAME, and ${NAME} in cpp files."
+  (let ((choice (completing-read
+                 (format "Choose a template for %s file (or no template): " file-type)
+                 '("Component" "Resource" "No template"))))
+    (cond ((string-equal choice "Component")
+           (let ((component-name (read-string "Enter the component name: ")))
+             (if (eq file-type 'cpp)
+                 (nap-template-insert-with-replace "NAP Component cpp.cpp" "${COMPONENT_NAME}" component-name)
+               (nap-template-insert-with-replace "NAP Component Header.h" "${COMPONENT_NAME}" component-name))))
+          ((string-equal choice "Resource")
+           (let ((resource-name (read-string "Enter the resource name: ")))
+             (if (eq file-type 'cpp)
+                 (nap-template-insert-with-replace "NAP Resource cpp.cpp" "${RESOURCE_NAME}" resource-name)
+               (nap-template-insert-with-replace "NAP Resource Header.h" "${RESOURCE_NAME}" resource-name))))
+          ((string-equal choice "No template")
+           (message "No template chosen.")))))
+
+(defun nap-insert-template-if-new-file ()
+  "Prompt to insert a NAP template if a new .cpp or .h file is created,
+and replace COMPONENT_NAME, RESOURCE_NAME, and ${NAME} in cpp files."
+  (when (and (buffer-file-name)
+             (not (file-exists-p (buffer-file-name))))
+    (let ((file-ext (file-name-extension (buffer-file-name))))
+      (cond ((string-equal file-ext "cpp")
+             (nap-prompt-template 'cpp))
+            ((string-equal file-ext "h")
+             (nap-prompt-template 'h))))))
+
+;; Hook this function to run when creating new files
+;; (add-hook 'find-file-hook 'nap-insert-template-if-new-file)
+;; Hook for C++ (.cpp) files
+(add-hook 'c++-mode-hook 'nap-insert-template-if-new-file)
+
+;; Hook for C (.h) files
+(add-hook 'c-mode-hook 'nap-insert-template-if-new-file)
+
+; Open napkin
+(defun nap-run-napkin ()
+  "Run the napkin executable from the bin/Release-*/napkin directory inside nap-framework-dir."
+  (interactive)
+  (nap-set-framework-dir)
+  (let* ((release-dir (car (directory-files (concat nap-framework-dir "/bin/") t "^Release-")))
+         (napkin-exec (concat release-dir "/napkin/napkin"))
+         (output-buffer (get-buffer-create "*NAP-output*")))
+    (if (file-executable-p napkin-exec)
+        (progn
+          (with-current-buffer output-buffer
+            (erase-buffer))
+          (start-process-shell-command "NAP-run-napkin" output-buffer napkin-exec)
+          (pop-to-buffer output-buffer)
+          (message "Running napkin..."))
+      (message "Napkin executable not found."))))
+
+
+
+#+END_SRC
+
+#+RESULTS:
+: nap-run-napkin
+
 * major modes
 ** org mode
 *** default template
