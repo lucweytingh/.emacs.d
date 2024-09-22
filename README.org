@@ -43,8 +43,8 @@ new user
 #+BEGIN_SRC emacs-lisp
 ; Main
 (setq my-fullname "Luc Weytingh")
-(setq my-email "luc@studiodrift.com")
-(setq my-user-path "/home/lucw/")
+(setq my-email "lucweytingh@pm.me")
+(setq my-user-path "/Users/lucweytingh/")
 
 ; Additional
 ; SSH configuration
@@ -67,7 +67,23 @@ which black
 #+RESULTS:
 : ~/.local/bin/black
 
+** startup screen
+Change title notes and banner on startup screen
+#+BEGIN_SRC emacs-lisp
+(setq my-dashboard-title "lmacs")
+(setq my-dashboard-banner "~/.emacs.d/spree.png")
+(defun my-dashboard-notes (list-size)
+(insert "remember:
+C-j        avy-goto-word-or-subword-1
+C-;        avy-goto-char-in-line
+C-c w      avy-copy-line
+C-c C-w    avy-copy-region
+C-c m      avy-move-line
+C-c C-m    avy-move-region
+"))
+#+END_SRC
 
+* startup
 ** os specific
 #+BEGIN_SRC emacs-lisp
 ;; macOS-specific settings
@@ -98,29 +114,12 @@ which black
 
 #+RESULTS:
 : utf-8-auto-unix
-
-** startup screen
-Change title notes and banner on startup screen
+** set window size
 #+BEGIN_SRC emacs-lisp
-(setq my-dashboard-title "lmacs")
-(setq my-dashboard-banner "~/.emacs.d/spree.png")
-(defun my-dashboard-notes (list-size)
-(insert "remember:
-C-j        avy-goto-word-or-subword-1
-C-;        avy-goto-char-in-line
-C-c w      avy-copy-line
-C-c C-w    avy-copy-region
-C-c m      avy-move-line
-C-c C-m    avy-move-region
-"))
+;; Start fullscreen (cross-platf)
+(add-hook 'window-setup-hook 'toggle-frame-fullscreen t)
 
-#+END_SRC
 
-* startup
-** enable full screen
-#+BEGIN_SRC emacs-lisp
-  ;; Start fullscreen (cross-platf)
-  (add-hook 'window-setup-hook 'toggle-frame-fullscreen t)
 
   ;; (require 'benchmark-init)
   ;; To disable collection of benchmark data after init is done.
@@ -141,6 +140,7 @@ C-c C-m    avy-move-region
 #+END_SRC
 
 #+RESULTS:
+: t
 
 ** disable defaults
 #+BEGIN_SRC emacs-lisp
