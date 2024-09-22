@@ -1803,6 +1803,20 @@ enables centered editing
 #+END_SRC
 
 * major modes
+** html mode
+#+BEGIN_SRC emacs-lisp
+(add-to-list 'auto-mode-alist '("\\.html\\'" . html-mode))
+
+(defun my-html-mode-keybindings ()
+  "Ensure M-o runs ace-window in html-mode."
+  (local-set-key (kbd "M-o") 'ace-window))
+
+(add-hook 'html-mode-hook 'my-html-mode-keybindings)
+#+END_SRC
+
+#+RESULTS:
+| my-html-mode-keybindings |
+
 ** org mode
 *** default template
 Auto-insert when opening file with certain suffix.
