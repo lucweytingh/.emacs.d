@@ -3,12 +3,15 @@
 !*/
 
 # Additional folders to ignore
-/repos/
 /straight/
 
 ### WHITELIST
 # Track this file
 !.gitignore
+
+# Installation files
+!install_macosx.sh
+!install_linux.sh
 
 # Base config files
 !README.org
@@ -20,3 +23,6 @@
 # Snippets
 !snippets/
 !snippets/**/*
+
+# Prot-files
+!repos/**/*

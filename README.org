@@ -4,6 +4,37 @@
 
 mid 2024 emacs config luc
 
+* installation
+Clone this repository in your user's home directory
+
+** mac
+Install emacs 29 from https://emacsformacosx.com/
+
+Then, open a terminal, cd to this directory and run
+#+BEGIN_SRC shell
+./install_macosx.sh
+#+END_SRC
+
+** linux
+Install emacs 29 by running
+#+BEGIN_SRC shell
+sudo add-apt-repository ppa:ubuntuhandbook1/emacs
+sudo apt install emacs emacs-common
+#+END_SRC
+
+Then cd to this directory and run
+#+BEGIN_SRC shell
+./install_linux.sh
+#+END_SRC
+
+** afterwards, for both linux and mac
+Update the variables in the "user-specific" section below
+
+Run M-x elpy-rpc-reinstall-virtualenv to setup python development
+Run M-x jedi:install-server to setup autocompletion for python
+
+
+
 * user specific
 settings that should be reconfigured if this config is transferred to a
 new user
@@ -28,6 +59,13 @@ new user
 (setq my-blacken-executable (concat my-user-path ".local/bin/black"))
 #+END_SRC
 
+Find the blacken executable path by running
+#+BEGIN_SRC shell
+which black
+#+END_SRC
+
+#+RESULTS:
+: ~/.local/bin/black
 
 
 ** os specific
@@ -64,15 +102,17 @@ new user
 ** startup screen
 Change title notes and banner on startup screen
 #+BEGIN_SRC emacs-lisp
-  (setq my-dashboard-title "lmacs")
-  (setq my-dashboard-banner "~/.emacs.d/spree.png")
-  (defun my-dashboard-notes (list-size)
-    (insert "remember:
-  C-M-r		move region inwards
-  C-M-;		copy and comment
-  M-s M-s occur selection (search through buffer)
-  C-c e u	unfill paragraph
-  "))
+(setq my-dashboard-title "lmacs")
+(setq my-dashboard-banner "~/.emacs.d/spree.png")
+(defun my-dashboard-notes (list-size)
+(insert "remember:
+C-j        avy-goto-word-or-subword-1
+C-;        avy-goto-char-in-line
+C-c w      avy-copy-line
+C-c C-w    avy-copy-region
+C-c m      avy-move-line
+C-c C-m    avy-move-region
+"))
 
 #+END_SRC
 
@@ -81,6 +121,22 @@ Change title notes and banner on startup screen
 #+BEGIN_SRC emacs-lisp
   ;; Start fullscreen (cross-platf)
   (add-hook 'window-setup-hook 'toggle-frame-fullscreen t)
+
+  ;; (require 'benchmark-init)
+  ;; To disable collection of benchmark data after init is done.
+  ;; (add-hook 'after-init-hook 'benchmark-init/deactivate)
+
+  ;; Because of dead pixels, set the screen to be smaller than fullscreen
+
+  ;; (progn
+  ;;   (setq ns-auto-hide-menu-bar t)
+  ;;   (tool-bar-mode 0)
+  ;;   (set-frame-size nil 242 63)
+  ;;   (set-frame-position nil 0 -33))
+
+
+(progn
+  (set-frame-size (selected-frame) 162 46))    ;; Set the frame position (x, y)
 
 #+END_SRC
 
@@ -302,7 +358,8 @@ define functions to switch between light and dark modes
 
 *** additional options
 #+BEGIN_SRC emacs-lisp
-(set-face-attribute 'region nil :background (doom-darken "#c792ea" 0.6) :foreground nil) ;; "#ffffff")
+  (set-face-attribute 'region nil :background (doom-darken "#c792ea" 0.6) :foreground nil)
+  ;; "#ffffff"
 #+END_SRC
 
 #+RESULTS:
@@ -383,102 +440,103 @@ to blacklist all i /don't/ want. for that, there exists =rich-minority=:
 *** hide mode-line, put at header-line spot
 
 #+BEGIN_SRC emacs-lisp
-;; status-icon to the left of filename
-(defun render-mode-line-status-icon (read-only modified)
-  (if read-only
-      ""
-    (if modified
-        " ●"
-        " ○"
-      )))
-(defun render-mode-line-remote (remote)
-  (if remote
-      " @"
-    ""))
+  ;; status-icon to the left of filename
+  (defun render-mode-line-status-icon (read-only modified)
+    (if read-only
+  ""
+      (if modified
+    " ●"
+    " ○"
+  )))
+  (defun render-mode-line-remote (remote)
+    (if remote
+  " @"
+      ""))
 
 
-;; mode-line section on left of screen
-(setq mode-line-left-section
-      (list
-       ;; day and time
-       ;; '(:eval (propertize (format-time-string " %b %d %H:%M ")
-       ;;                     'face 'font-lock-builtin-face))
+  ;; mode-line section on left of screen
+  (setq mode-line-left-section
+  (list
+   ;; day and time
+   ;; '(:eval (propertize (format-time-string " %b %d %H:%M ")
+   ;;                     'face 'font-lock-builtin-face))
 
-       ;; buffer status icon (dot)
-       '(:eval (render-mode-line-status-icon buffer-read-only (buffer-modified-p)))
-       ;; (render-mode-line-remote mode-line-remote)
+   ;; buffer status icon (dot)
+   '(:eval (render-mode-line-status-icon buffer-read-only (buffer-modified-p)))
+   ;; (render-mode-line-remote mode-line-remote)
 
-       ;; the buffer name; the file name as a tool tip
-       '(:eval (propertize " %b "
-                           'help-echo (buffer-file-name)))
+   ;; the buffer name; the file name as a tool tip
+   '(:eval (propertize " %b "
+           'help-echo (buffer-file-name)))
 
-       ;; relative position, size of file
-       ;; " ["
-       ;; (propertize "%p" 'face 'font-lock-constant-face) ;; % above top
-       ;; "/"
-       ;; (propertize "%I" 'face 'font-lock-constant-face) ;; size
-       ;; "] "
-       ))
+   ;; relative position, size of file
+   ;; " ["
+   ;; (propertize "%p" 'face 'font-lock-constant-face) ;; % above top
+   ;; "/"
+   ;; (propertize "%I" 'face 'font-lock-constant-face) ;; size
+   ;; "] "
+   ))
 
-;; mode-line section on right of screen
-(setq mode-line-right-section
-      (list
-       ;; git branch
-       ;; '(:eval (propertize (substring vc-mode 5)))
-                           ;; 'face 'font-lock-comment-face))
+  ;; mode-line section on right of screen
+  (setq mode-line-right-section
+  (list
+   ;; git branch
+   ;; '(:eval (propertize (substring vc-mode 5)))
 
-       ;; line and column
-       " [" ;; '%02' to set to 2 chars at least; prevents flickering
-       (propertize "%02l" 'face 'font-lock-comment-face) ":"
-       (propertize "%02c" 'face 'font-lock-comment-face)
-       "] "
-       ;; (propertize org-mode-line-string 'face '(:foreground "#5DD8FF"))
+   ;; 'face 'font-lock-comment-face))
 
-       ;; the current major mode
-       (propertize " %m" 'face 'font-lock-comment-face)
-       " "
-       ;; rich-minority minor modes
-       ;; rm--mode-line-construct
-       "  "
-       ))
+   ;; line and column
+   " [" ;; '%02' to set to 2 chars at least; prevents flickering
+   (propertize "%02l" 'face 'font-lock-comment-face) ":"
+   (propertize "%02c" 'face 'font-lock-comment-face)
+   "] "
+   ;; (propertize org-mode-line-string 'face '(:foreground "#5DD8FF"))
 
-(defun mode-line-render ()
-  (append (append mode-line-left-section
-                  (list
-                   ;; function to right-justify part of modeline
-                   ;; by filling center with spaces
-                   '(:eval (s-repeat
-                            (- (+ (window-total-width) 0)
-                               (+
-                                (length (format-mode-line mode-line-right-section))
-                                (length (format-mode-line mode-line-left-section))))
-                            " "))
-                   )
-                  mode-line-right-section)))
+   ;; the current major mode
+   (propertize " %m" 'face 'font-lock-comment-face)
+   " "
+   ;; rich-minority minor modes
+   ;; rm--mode-line-construct
+   "  "
+   ))
+
+  (defun mode-line-render ()
+    (append (append mode-line-left-section
+        (list
+         ;; function to right-justify part of modeline
+         ;; by filling center with spaces
+         '(:eval (s-repeat
+            (- (+ (window-total-width) 0)
+         (+
+          (length (format-mode-line mode-line-right-section))
+          (length (format-mode-line mode-line-left-section))))
+            " "))
+         )
+        mode-line-right-section)))
 
 
-;; actually render the mode-line
-;; (setq-default mode-line-format (mode-line-render))
+  ;; actually render the mode-line
+  ;; (setq-default mode-line-format (mode-line-render))
 
-;; move modeline to the top of the buffer
-(setq-default header-line-format (mode-line-render))
-;; (setq-default mode-line-format'(""))
-;; hide empty mode-line
-(setq-default mode-line-format nil)
+  ;; move modeline to the top of the buffer
+  (setq-default header-line-format (mode-line-render))
+  ;; (setq-default mode-line-format'(""))
+  ;; hide empty mode-line
+  (setq-default mode-line-format nil)
 
-;; reduce height of empty mode-line
-(set-face-attribute 'mode-line nil :foreground "white" :background nil :box nil :overline "#1e212e")
-(set-face-attribute 'mode-line-inactive nil :background nil :box nil :foreground "#232635" :overline "#1e212e")
+  ;; reduce height of empty mode-line
+  (set-face-attribute 'mode-line nil :foreground "white" :background nil :box nil :overline "#1e212e")
+  (set-face-attribute 'mode-line-inactive nil :background nil :box nil :foreground "#232635" :overline "#1e212e")
 
-(set-face-attribute 'vertical-border nil :background nil :foreground "#676E95")
+  (set-face-attribute 'vertical-border nil :background nil :foreground "#676E95")
 
-;; decorate header-line
-(set-face-attribute 'header-line nil
-                    :background "#1c1f2b"
-                    :foreground "#EEFFFF"
-                    :box '(:line-width 5 :color "#1c1f2b")
-                    :overline nil
-                    :underline nil)
+  ;; decorate header-line
+  (set-face-attribute 'header-line nil
+          :background "#1c1f2b"
+          :foreground "#EEFFFF"
+          :box '(:line-width 5 :color "#1c1f2b")
+          :overline nil
+          :underline nil)
 #+END_SRC
 
 #+RESULTS:
@@ -1166,7 +1224,17 @@ even beep.)"
   (global-set-key (kbd "C-,") 'mc/mark-previous-like-this)
   (global-set-key (kbd "C-M-,") 'mc/unmark-next-like-this)
   (global-set-key (kbd "C-M-.") 'mc/unmark-previous-like-this)
-  (global-set-key (kbd "C-c C-,") 'mc/mark-all-like-this))
+  (global-set-key (kbd "C-c C-,") 'mc/mark-all-like-this)
+  (add-hook 'org-mode-hook
+          (lambda ()
+            (define-key org-mode-map (kbd "C-.") 'mc/mark-next-like-this)
+            (define-key org-mode-map (kbd "C-,") 'mc/mark-previous-like-this)
+            (define-key org-mode-map (kbd "C-M-,") 'mc/unmark-next-like-this)
+            (define-key org-mode-map (kbd "C-M-.") 'mc/unmark-previous-like-this)
+            (define-key org-mode-map (kbd "C-c C-,") 'mc/mark-all-like-this)
+            )
+          )
+  )
 
 ;; (define-key mc/keymap (kbd "<return>") nil)
 
@@ -1802,6 +1870,202 @@ enables centered editing
   (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map))
 #+END_SRC
 
+** NAP
+Includes functions for automating repeated NAP processes
+#+BEGIN_SRC emacs-lisp
+;; create an application
+(defvar nap-framework-dir nil
+  "The path to the NAP framework directory. It's unset by default and will prompt the user to set it.")
+
+(defun nap-set-framework-dir ()
+  "Prompt the user to set the NAP framework directory if it is not already set."
+  (unless nap-framework-dir
+    (setq nap-framework-dir
+          (read-directory-name "Set NAP framework directory: "))))
+
+(defun nap-create-app (app-name)
+  "Create a new NAP application with the given APP-NAME and show output in *NAP-output* buffer.
+If nap-framework-dir is not set, prompt the user to set it."
+  (interactive "sEnter the name of the application: ")
+  (nap-set-framework-dir)
+  (let ((default-directory nap-framework-dir)
+        (output-buffer (get-buffer-create "*NAP-output*")))
+    (with-current-buffer output-buffer
+      (erase-buffer))
+    (start-process-shell-command
+     "NAP-create-app" output-buffer
+     (concat "./tools/create_app.sh " app-name))
+    (pop-to-buffer output-buffer)
+    (message "Creating NAP application '%s'..." app-name)))
+
+;; build an application
+(defun nap-get-apps-directories ()
+  "Get a list of all directories in the 'apps' folder within nap-framework-dir."
+  (let ((apps-dir (concat (file-name-as-directory nap-framework-dir) "apps/")))
+    (directory-files apps-dir t "^[^.]" t)))
+
+(defun nap-build-app ()
+  "Build a selected NAP application by running its build.sh script.
+The user is prompted to choose from the available projects in the apps folder."
+  (interactive)
+  (nap-set-framework-dir)
+  (let* ((apps-dir (concat (file-name-as-directory nap-framework-dir) "apps/"))
+         (apps (nap-get-apps-directories))
+         (app-name (completing-read "Choose a NAP application to build: "
+                                    (mapcar #'file-name-nondirectory apps))))
+    (let ((app-build-script (concat apps-dir app-name "/build.sh"))
+          (output-buffer (get-buffer-create "*NAP-output*")))
+      (if (file-exists-p app-build-script)
+          (progn
+            (with-current-buffer output-buffer
+              (erase-buffer))
+            (start-process-shell-command
+             "NAP-build-app" output-buffer
+             (concat app-build-script))
+            (pop-to-buffer output-buffer)
+            (message "Building NAP application '%s'..." app-name))
+        (message "No build.sh script found for '%s'" app-name)))))
+
+(defun nap-get-demos-directories ()
+  "Get a list of all directories in the 'apps' folder within nap-framework-dir."
+  (let ((apps-dir (concat (file-name-as-directory nap-framework-dir) "demos/")))
+    (directory-files apps-dir t "^[^.]" t)))
+
+(defun nap-build-demo ()
+  "Build a selected NAP demo by running its build.sh script.
+The user is prompted to choose from the available projects in the demos folder."
+  (interactive)
+  (nap-set-framework-dir)
+  (let* ((demos-dir (concat (file-name-as-directory nap-framework-dir) "demos/"))
+         (demos (nap-get-demos-directories))
+         (demo-name (completing-read "Choose a NAP demo to build: "
+                                    (mapcar #'file-name-nondirectory demos))))
+    (let ((demo-build-script (concat demos-dir demo-name "/build.sh"))
+          (output-buffer (get-buffer-create "*NAP-output*")))
+      (if (file-exists-p demo-build-script)
+          (progn
+            (with-current-buffer output-buffer
+              (erase-buffer))
+            (start-process-shell-command
+             "NAP-build-demo" output-buffer
+             (concat demo-build-script))
+            (pop-to-buffer output-buffer)
+            (message "Building NAP demo '%s'..." demo-name))
+        (message "No build.sh script found for '%s'" demo-name)))))
+
+
+;; Launch an application
+(defun nap-get-executables-global ()
+  "Get a list of all executable files in the bin/Release-* directory of nap-framework-dir, excluding directories."
+  (let* ((release-dir (car (directory-files (concat nap-framework-dir "/bin/") t "^Release-")))
+         (files (and release-dir (directory-files release-dir t "^[^.].*"))))
+    (cl-remove-if (lambda (file)
+                    (or (file-directory-p file) (not (file-executable-p file))))
+                  files)))
+
+(defun nap-launch-app ()
+  "Launch a selected executable from the bin/Release-* folder in nap-framework-dir."
+  (interactive)
+  (nap-set-framework-dir)
+  (let ((executables (nap-get-executables-global)))
+    (if executables
+        (let* ((exec-choice (completing-read "Choose an executable to launch: "
+                                             (mapcar #'file-name-nondirectory executables)))
+               (exec-path (concat (file-name-as-directory (car (directory-files
+                                                               (concat nap-framework-dir "/bin/")
+                                                               t "^Release-"))) exec-choice))
+               (output-buffer (get-buffer-create "*NAP-output*")))
+          (with-current-buffer output-buffer
+            (erase-buffer))
+          (start-process-shell-command
+           "NAP-launch-app" output-buffer exec-path)
+          (pop-to-buffer output-buffer)
+          (message "Launching executable '%s'..." exec-choice))
+      (message "No executable files found in bin/Release-*."))))
+
+(defalias 'nap-run-app 'nap-launch-app)
+
+
+;; Using templates
+(defun nap-template-replace (placeholder replacement)
+  "Replace all occurrences of PLACEHOLDER with REPLACEMENT in the current buffer."
+  (save-excursion
+    (goto-char (point-min))
+    (while (search-forward placeholder nil t)
+      (replace-match replacement t))))
+
+(defun nap-template-insert-with-replace (file placeholder name)
+  "Insert the content of a template file, replace PLACEHOLDER with NAME, and replace ${NAME} with the file name."
+  (let ((template-path (expand-file-name (concat "templates/NAP/" file) user-emacs-directory))
+        (file-name-no-ext (file-name-sans-extension (buffer-name))))
+    (when (file-exists-p template-path)
+      (insert-file-contents template-path)
+      (nap-template-replace placeholder name)
+      (when (string-equal (file-name-extension (buffer-file-name)) "cpp")
+        (nap-template-replace "${NAME}" file-name-no-ext)))))
+
+(defun nap-prompt-template (file-type)
+  "Prompt the user to choose a template based on the FILE-TYPE ('cpp or 'h),
+and replace placeholders COMPONENT_NAME, RESOURCE_NAME, and ${NAME} in cpp files."
+  (let ((choice (completing-read
+                 (format "Choose a template for %s file (or no template): " file-type)
+                 '("Component" "Resource" "No template"))))
+    (cond ((string-equal choice "Component")
+           (let ((component-name (read-string "Enter the component name: ")))
+             (if (eq file-type 'cpp)
+                 (nap-template-insert-with-replace "NAP Component cpp.cpp" "${COMPONENT_NAME}" component-name)
+               (nap-template-insert-with-replace "NAP Component Header.h" "${COMPONENT_NAME}" component-name))))
+          ((string-equal choice "Resource")
+           (let ((resource-name (read-string "Enter the resource name: ")))
+             (if (eq file-type 'cpp)
+                 (nap-template-insert-with-replace "NAP Resource cpp.cpp" "${RESOURCE_NAME}" resource-name)
+               (nap-template-insert-with-replace "NAP Resource Header.h" "${RESOURCE_NAME}" resource-name))))
+          ((string-equal choice "No template")
+           (message "No template chosen.")))))
+
+(defun nap-insert-template-if-new-file ()
+  "Prompt to insert a NAP template if a new .cpp or .h file is created,
+and replace COMPONENT_NAME, RESOURCE_NAME, and ${NAME} in cpp files."
+  (when (and (buffer-file-name)
+             (not (file-exists-p (buffer-file-name))))
+    (let ((file-ext (file-name-extension (buffer-file-name))))
+      (cond ((string-equal file-ext "cpp")
+             (nap-prompt-template 'cpp))
+            ((string-equal file-ext "h")
+             (nap-prompt-template 'h))))))
+
+;; Hook this function to run when creating new files
+;; (add-hook 'find-file-hook 'nap-insert-template-if-new-file)
+;; Hook for C++ (.cpp) files
+(add-hook 'c++-mode-hook 'nap-insert-template-if-new-file)
+
+;; Hook for C (.h) files
+(add-hook 'c-mode-hook 'nap-insert-template-if-new-file)
+
+; Open napkin
+(defun nap-run-napkin ()
+  "Run the napkin executable from the bin/Release-*/napkin directory inside nap-framework-dir."
+  (interactive)
+  (nap-set-framework-dir)
+  (let* ((release-dir (car (directory-files (concat nap-framework-dir "/bin/") t "^Release-")))
+         (napkin-exec (concat release-dir "/napkin/napkin"))
+         (output-buffer (get-buffer-create "*NAP-output*")))
+    (if (file-executable-p napkin-exec)
+        (progn
+          (with-current-buffer output-buffer
+            (erase-buffer))
+          (start-process-shell-command "NAP-run-napkin" output-buffer napkin-exec)
+          (pop-to-buffer output-buffer)
+          (message "Running napkin..."))
+      (message "Napkin executable not found."))))
+
+
+
+#+END_SRC
+
+#+RESULTS:
+: nap-run-napkin
+
 * major modes
 ** html mode
 #+BEGIN_SRC emacs-lisp
@@ -1888,7 +2152,7 @@ Auto-insert when opening file with certain suffix.
                                ;; (visual-fill-column-mode)
                                (org-bullets-mode)
                                (org-indent-mode)
-                               (flyspell-mode)
+                               ;; (flyspell-mode)
                                (wrap-region-add-wrapper "=" "=")
                                (wrap-region-add-wrapper "" "")
                                (wrap-region-add-wrapper "+" "+")
@@ -2186,6 +2450,9 @@ improves this behaviour.
   :init
   (global-flycheck-mode t))
 #+END_SRC
+
+#+RESULTS:
+
 ** latex
 *** default behaviour
 **** general
@@ -2488,11 +2755,11 @@ math mode already. We need to adapt the =yank-handled-properties= variable
 ** shaders
 
 #+BEGIN_SRC emacs-lisp
-;; ;; Install and configure glsl-mode using use-package with straight.el
-;; (use-package glsl-mode
-;;   :straight t
-;;   :mode ("\\.frag\\'" . glsl-mode)
-;;   :hook ((glsl-mode . (lambda () (local-set-key (kbd "C-c C-c") 'glsl-viewer-toggle)))))
+;; Install and configure glsl-mode using use-package with straight.el
+(use-package glsl-mode
+  :straight t
+  :mode ("\\.frag\\'" . glsl-mode))
+  ;; :hook ((glsl-mode . (lambda () (local-set-key (kbd "C-c C-c") 'glsl-viewer-toggle)))))
 
 ;; (provide 'init-glsl)
 
@@ -2525,7 +2792,10 @@ math mode already. We need to adapt the =yank-handled-properties= variable
 ;;               (glsl-viewer-toggle))))
 #+END_SRC
 
-* c++
+#+RESULTS:
+: t
+
+** c++
 #+BEGIN_SRC emacs-lisp
 (use-package modern-cpp-font-lock
   :straight t)
@@ -2589,3 +2859,16 @@ math mode already. We need to adapt the =yank-handled-properties= variable
 
 #+RESULTS:
 : t
+
+** xml
+#+BEGIN_SRC emacs-lisp
+;; Configure nxml-mode (built-in)
+(use-package nxml-mode
+  :ensure nil  ;; `nxml-mode` is built-in, so no need to install
+  :mode ("\\.xml\\'" "\\.urdf\\'"))
+
+(provide 'init-xml)
+#+END_SRC
+
+#+RESULTS:
+: init-xml
