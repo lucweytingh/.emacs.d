@@ -2042,6 +2042,27 @@ and replace COMPONENT_NAME, RESOURCE_NAME, and ${NAME} in cpp files."
 ;; Hook for C (.h) files
 (add-hook 'c-mode-hook 'nap-insert-template-if-new-file)
 
+(defun nap-build-napkin ()
+  "Build a selected NAP demo by running its build.sh script.
+The user is prompted to choose from the available projects in the demos folder."
+  (interactive)
+  (nap-set-framework-dir)
+
+  (let ((napkin-build-script (concat
+                              (file-name-as-directory nap-framework-dir)
+                              "tools/napkin/build.sh"))
+        (output-buffer (get-buffer-create "*NAP-output*")))
+    (if (file-exists-p napkin-build-script)
+        (progn
+          (with-current-buffer output-buffer
+            (erase-buffer))
+          (start-process-shell-command
+           "NAP-build-napkin" output-buffer
+           (concat napkin-build-script))
+          (pop-to-buffer output-buffer)
+          (message "Building napkin..."))
+      (message "Napkin build.sh script not found"))))
+
 ; Open napkin
 (defun nap-run-napkin ()
   "Run the napkin executable from the bin/Release-*/napkin directory inside nap-framework-dir."
