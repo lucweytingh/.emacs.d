@@ -1921,8 +1921,8 @@ The user is prompted to choose from the available projects in the apps folder."
             (with-current-buffer output-buffer
               (erase-buffer))
             (start-process-shell-command
-             "NAP-create-app" output-buffer
-             (concat "./tools/create_app.sh " app-name))
+             "NAP-build-app" output-buffer
+             (concat app-build-script))
             (pop-to-buffer output-buffer)
             (message "Building NAP application '%s'..." app-name))
         (message "No build.sh script found for '%s'" app-name)))))
