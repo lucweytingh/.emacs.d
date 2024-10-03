@@ -1892,7 +1892,8 @@ If nap-framework-dir is not set, prompt the user to set it."
         (output-buffer (get-buffer-create "*NAP-output*")))
     (with-current-buffer output-buffer
       (erase-buffer))
-    (start-process-shell-command
+    ;; (start-process-shell-command
+     (start-process-shell-command
      "NAP-create-app" output-buffer
      (concat "./tools/create_app.sh " app-name))
     (pop-to-buffer output-buffer)
@@ -1920,8 +1921,8 @@ The user is prompted to choose from the available projects in the apps folder."
             (with-current-buffer output-buffer
               (erase-buffer))
             (start-process-shell-command
-             "NAP-build-app" output-buffer
-             (concat app-build-script))
+             "NAP-create-app" output-buffer
+             (concat "./tools/create_app.sh " app-name))
             (pop-to-buffer output-buffer)
             (message "Building NAP application '%s'..." app-name))
         (message "No build.sh script found for '%s'" app-name)))))
