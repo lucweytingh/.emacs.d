@@ -26,3 +26,4 @@
 
 # Prot-files
 !repos/**/*
+/repos/scel/

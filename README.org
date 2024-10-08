@@ -245,15 +245,22 @@ Turn off all windows decoration.
             (setq indent-tabs-mode t
                   do-whitespace-cleanup nil)))
 
+;; (add-hook 'prog-mode-hook
+;;           (lambda ()
+;;             (whitespace-mode +1)
+;;             ;; (setq show-trailing-whitespace t)
+;;             ))
 (add-hook 'prog-mode-hook
           (lambda ()
-            (whitespace-mode +1)
-            ;; (setq show-trailing-whitespace t)
-            ))
+            (unless (derived-mode-p 'c++-mode)  ;; Exclude C++ mode
+              (whitespace-mode +1)
+              ;; (setq show-trailing-whitespace t)
+              )))
 #+END_SRC
 
 #+RESULTS:
-| lambda | nil | (whitespace-mode 1) |
+| lambda | nil | (unless (derived-mode-p 'c++-mode) (whitespace-mode 1)) |
+| lambda | nil | (whitespace-mode 1)                                     |
 
 ** indents
 #+BEGIN_SRC emacs-lisp
@@ -1874,6 +1881,8 @@ enables centered editing
 Includes functions for automating repeated NAP processes
 #+BEGIN_SRC emacs-lisp
 ;; create an application
+(setenv "QT_DIR" "~/Qt/6.7.2/gcc_64")
+
 (defvar nap-framework-dir nil
   "The path to the NAP framework directory. It's unset by default and will prompt the user to set it.")
 
@@ -1892,7 +1901,6 @@ If nap-framework-dir is not set, prompt the user to set it."
         (output-buffer (get-buffer-create "*NAP-output*")))
     (with-current-buffer output-buffer
       (erase-buffer))
-    ;; (start-process-shell-command
      (start-process-shell-command
      "NAP-create-app" output-buffer
      (concat "./tools/create_app.sh " app-name))
@@ -2877,10 +2885,35 @@ math mode already. We need to adapt the =yank-handled-properties= variable
     :config
     (progn
       (add-hook 'irony-mode-hook #'irony-eldoc)))
+
+
+(defun my-c++-mode-settings ()
+  (setq truncate-lines nil)
+  (local-set-key (kbd "C-c C-c") 'nap-build-app)
+  )
+
+(add-hook 'c++-mode-hook 'my-c++-mode-settings)
+
+
+(defun switch-cpp-h-file ()
+  "Switch between .cpp and .h file with the same base name."
+  (interactive)
+  (let* ((file (buffer-file-name))
+         (base-name (file-name-sans-extension file))
+         (extension (file-name-extension file))
+         (counterpart (cond ((string-equal extension "cpp") (concat base-name ".h"))
+                            ((string-equal extension "h") (concat base-name ".cpp"))
+                            (t nil))))
+    (if (and counterpart (file-exists-p counterpart))
+        (find-file counterpart)
+      (message "No corresponding .cpp or .h file found."))))
+
+;; Bind the function to C-c o
+(global-set-key (kbd "C-c o") 'switch-cpp-h-file)
 #+END_SRC
 
 #+RESULTS:
-: t
+| my-c++-mode-settings | nap-insert-template-if-new-file |
 
 ** xml
 #+BEGIN_SRC emacs-lisp
@@ -2894,3 +2927,32 @@ math mode already. We need to adapt the =yank-handled-properties= variable
 
 #+RESULTS:
 : init-xml
+
+** supercollider
+#+BEGIN_SRC emacs-lisp
+;; Automatically clone the SuperCollider's scel repo if not already cloned
+(let ((scel-repo-dir (concat user-emacs-directory "repos/scel")))
+  (unless (file-directory-p scel-repo-dir)
+    (shell-command
+     (concat "git clone https://github.com/supercollider/scel.git " scel-repo-dir))))
+
+;; Add SuperCollider's scel directory to load path
+(add-to-list 'load-path (concat user-emacs-directory "repos/scel/el"))
+
+;; Load sclang-mode
+(require 'sclang)
+
+;; Automatically enable sclang-mode for .scd files
+(add-to-list 'auto-mode-alist '("\\.scd\\'" . sclang-mode))
+
+;; Optional hook for customization
+(add-hook 'sclang-mode-hook
+          (lambda ()
+            (turn-on-font-lock))) ;; Enable syntax highlighting
+
+
+#+END_SRC
+
+#+RESULTS:
+| lambda | nil | (turn-on-font-lock)                                                                                            |                                                         |
+| lambda | nil | (if (string= (buffer-name) sclang-post-buffer) (progn (setq mode-line-format '(- sclang-server-info-string)))) | (define-key sclang-mode-map  sclang-server-key-map) |
