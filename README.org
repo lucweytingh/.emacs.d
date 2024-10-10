@@ -1076,11 +1076,44 @@ The normal global definition of the character C-x indirects to this keymap.")
 
 ace-window config
 #+BEGIN_SRC emacs-lisp
+(defun my/ace-window-copy-file-path (window)
+  "Copy the file path of the buffer in the selected WINDOW to the clipboard."
+  (with-selected-window window
+    (let ((file-path (buffer-file-name)))
+      (if file-path
+          (progn
+            (kill-new file-path)
+            (message "Copied file path: %s" file-path))
+        (message "No file associated with this window")))))
+
+;; Add the custom action to ace-window's dispatch list
+(defun my/ace-window-setup-custom-actions ()
+  "Add custom actions to ace-window."
+  (setq aw-dispatch-alist
+        '((?x aw-delete-window "Delete Window")
+          (?m aw-swap-window "Swap Windows")
+          (?n aw-flip-window)
+          (?v aw-split-window-vert "Split Vert Window")
+          (?b aw-split-window-horz "Split Horz Window")
+          (?o delete-other-windows "Delete Other Windows")
+          (?c my/ace-window-copy-file-path "Copy Window")
+          (?p aw-copy-window "Copy File Path")
+          (?f aw-flip-window)
+          (?g aw-switch-buffer-in-window "Switch Buffer")
+          (?u aw-switch-buffer-other-window "Switch Buffer Other Window")
+          (?z aw-transpose-frame "Transpose Frame")
+          (?? aw-show-dispatch-help))))
+
+;; Apply the custom actions when ace-window is loaded
 (use-package ace-window
-  :straight t)
+  :straight t
+  :config
+  (my/ace-window-setup-custom-actions))
+
 (global-set-key (kbd "M-o") 'ace-window)
 (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l))
 (setq aw-dispatch-always t)
+
 #+END_SRC
 
 #+RESULTS:
