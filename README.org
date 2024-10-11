@@ -1,4 +1,4 @@
-﻿#+TITLE: emacs configuration
+#+TITLE: emacs configuration
 #+OPTIONS: num:nil email:t
 #+HTML_HEAD: <link rel=stylesheet href="http://auc-computing.nl/css/aucc.css" type="text/css">
 
@@ -41,18 +41,18 @@ new user
 
 ** user specific variables
 #+BEGIN_SRC emacs-lisp
-; Main
-(setq my-fullname "Luc Weytingh")
-(setq my-email "lucweytingh@pm.me")
-(setq my-user-path "/Users/lucweytingh/")
+  ; Main
+  (setq my-fullname "Luc Weytingh")
+  (setq my-email "lucweytingh@pm.me")
+  (setq my-user-path "/Users/lucw/")
 
-; Additional
-; SSH configuration
-(setq ssh-config
-      '(
-        ("server" "/ssh:lucw@49.13.225.4:/home/lucw/" "(set-bash)")
-        ("gc" "/ssh:lucw@94.130.183.250:/home/lucw/" "(set-bash)")
-        ))
+  ; Additional
+  ; SSH configuration
+  (setq ssh-config
+  '(
+    ("server" "/ssh:lucw@49.13.225.4:/home/lucw/" "(set-bash)")
+    ("gc" "/ssh:lucw@94.130.183.250:/home/lucw/" "(set-bash)")
+    ))
 
 
 ; Blacken is the Python auto-formatter. Uncomment and set this path to use it.
@@ -308,7 +308,7 @@ of the syntax class ')'."
 *** doom-palenight
 #+BEGIN_SRC emacs-lisp
 ;;; doom-palenight-theme.el --- inspired by Material-PaleNight -*- no-byte-compile: t; -*-
-(add-to-list 'custom-theme-load-path "~/.emacs.d/themes")
+;; (add-to-list 'custom-theme-load-path "~/.emacs.d/themes")
 (use-package doom-themes
   :straight t
   :config (load-theme 'doom-palenight t)
