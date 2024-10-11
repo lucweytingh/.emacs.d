@@ -93,23 +93,6 @@ C-c C-m    avy-move-region
 
   ;; Set explicit shell file name
   (setq explicit-shell-file-name "/bin/zsh"))
-
-;; Set fyle encoding system based on os
-(cond
- ((eq system-type 'darwin)
-  ;; macOS-specific settings
-  (prefer-coding-system 'utf-8-unix)
-  (setq-default buffer-file-coding-system 'utf-8-unix))
- ((eq system-type 'windows-nt)
-  ;; Windows-specific settings
-  (prefer-coding-system 'utf-8)
-  (setq-default buffer-file-coding-system 'utf-8-auto-unix))
- (t
-  ;; Default settings for other systems
-  (prefer-coding-system 'utf-8)
-  (setq-default buffer-file-coding-system 'utf-8-auto-unix)))
-
-
 #+END_SRC
 
 #+RESULTS:

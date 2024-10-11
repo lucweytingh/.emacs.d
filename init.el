@@ -19,7 +19,7 @@
 
 (eval-when-compile
   (require 'use-package))
-  
+
 (require 'bind-key)
 (setq use-package-always-ensure t)
 
@@ -41,11 +41,26 @@
 
 
 
-;; Disable asking for confirmation for the following commands  
+;; Disable asking for confirmation for the following commands
 (put 'narrow-to-region 'disabled nil)
 (put 'downcase-region 'disabled nil)
 (put 'upcase-region 'disabled nil)
 (put 'erase-buffer 'disabled nil)
+
+;; Set fyle encoding system based on os
+(cond
+ ((eq system-type 'darwin)
+  ;; macOS-specific settings
+  (prefer-coding-system 'utf-8-unix)
+  (setq-default buffer-file-coding-system 'utf-8-unix))
+ ((eq system-type 'windows-nt)
+  ;; Windows-specific settings
+  (prefer-coding-system 'utf-8)
+  (setq-default buffer-file-coding-system 'utf-8-auto-unix))
+ (t
+  ;; Default settings for other systems
+  (prefer-coding-system 'utf-8)
+  (setq-default buffer-file-coding-system 'utf-8-auto-unix)))
 
 ;; Function that compiles org to el
 (defun org-to-el (&optional org-file)
