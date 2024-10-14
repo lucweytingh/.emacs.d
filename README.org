@@ -44,7 +44,7 @@ new user
   ; Main
   (setq my-fullname "Luc Weytingh")
   (setq my-email "lucweytingh@pm.me")
-  (setq my-user-path "/Users/lucw/")
+  (setq my-user-path "/home/lucw/")
 
   ; Additional
   ; SSH configuration
@@ -87,12 +87,15 @@ C-c C-m    avy-move-region
 ** os specific
 #+BEGIN_SRC emacs-lisp
 ;; macOS-specific settings
-(when (eq system-type 'darwin)
+(cond
+ ((eq system-type 'darwin)
   ;; Set command modifier to meta
   (setq mac-command-modifier 'meta)
 
   ;; Set explicit shell file name
   (setq explicit-shell-file-name "/bin/zsh"))
+ ((string-equal system-type "gnu/linux")
+  (setq explicit-shell-file-name "/usr/bin/zsh")))
 #+END_SRC
 
 #+RESULTS:
