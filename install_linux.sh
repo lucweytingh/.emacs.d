@@ -1,11 +1,11 @@
-#!/bin/sh
+#!/bin/bash
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 ORANGE='\033[38;5;214m'
 NC="\033[0m" # No Color
 
-function install_package (){
+function install_package () {
     REQUIRED_PKG=$1
     PKG_OK=$(dpkg-query -W --showformat='${Status}\n' "$REQUIRED_PKG" | grep "install ok installed")
     echo -e "[${GREEN}*${NC}] Checking for $REQUIRED_PKG: $PKG_OK"
