@@ -39,5 +39,8 @@ else
     echo "Repo straight.el is already installed."
 fi
 
+# Remove BOM from README
+sed -i '1s/^\xEF\xBB\xBF//' "$SCRIPT_DIR/README.org"
+
 echo "Installation complete\n"
 echo "Don't forget to update some variables (e.g. full name, ssh config, dashboard title & notes) in the user specific settings at the top of README.org"
