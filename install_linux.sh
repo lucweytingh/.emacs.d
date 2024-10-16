@@ -11,7 +11,7 @@ function install_package () {
     echo -e "[${GREEN}*${NC}] Checking for $REQUIRED_PKG: $PKG_OK"
     if [ -z "$PKG_OK" ]; then
         echo -e "[${RED}*${NC}] No $REQUIRED_PKG. Setting up $REQUIRED_PKG."
-        sudo apt-get install "$REQUIRED_PKG"
+        sudo apt install "$REQUIRED_PKG"
     fi
 }
 
@@ -19,22 +19,23 @@ SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
 
 install_package python3
 install_package python3-pip
-install_package python3.10-venv
-
-# Install black & ipython
-pip install black
-pip install ipython
+install_package python3-venv
+install_package python3-ipython
+install_package black
 
 # Installation of straight.el
 if [ ! -d "$SCRIPT_DIR/straight/repos/straight.el" ]; then
-    echo "Installing straight package manager"
+    echo "[${RED}*${NC}] Setting up straight package manager"
     mkdir -p "$SCRIPT_DIR/straight/repos"
     cd "$SCRIPT_DIR/straight/repos" || exit
     git clone https://github.com/radian-software/straight.el.git
-    echo "Repo straight.el has been successfully cloned."
+    echo -e "Repo straight.el has been successfully cloned."
 else
-    echo "Repo straight.el is already installed."
+    echo -e "[${GREEN}*${NC}] Checking for straight.el: install ok installed."
 fi
 
-echo "Installation complete\n"
-echo "Don't forget to update some variables (e.g. full name, ssh config, dashboard title & notes) in the user specific settings at the top of README.org"
+# Remove BOM from README
+sed -i '1s/^\xEF\xBB\xBF//' "$SCRIPT_DIR/README.org"
+
+echo -e "\n${GREEN}Installation complete${NC}"
+echo -e "${ORANGE}Don't forget to update some variables (e.g. full name, ssh config, dashboard title & notes) in the user specific settings at the top of README.org${NC}"
