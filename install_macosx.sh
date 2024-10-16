@@ -11,7 +11,7 @@ SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
 if ! command -v brew &> /dev/null; then
     echo "[${ORANGE}*${NC}] Installing Homebrew..."
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-    echo "Homebrew installation completed."
+    echo "Homebrew installed."
 fi
 
 
@@ -44,8 +44,14 @@ else
     echo "[${GREEN}*${NC}] straight.el is installed."
 fi
 
+
+echo "[${ORANGE}*${NC}] Please launch Emacs. It will crash, that's normal."
+read -r -p "Continue? (y/n): " response
+
 # Remove BOM from README
-awk 'NR==1{sub(/^\xEF\xBB\xBF/, "")}1' "$SCRIPT_DIR/README.org" > temp && mv temp "$SCRIPT_DIR/README.org"
+sed -i '' '1s/^\xEF\xBB\xBF//' "$SCRIPT_DIR/README.org"
+
 
 echo "\n${GREEN}Installation complete${NC}"
+echo "Emacs will now download all packages and dependencies upon (re)launch"
 echo "${ORANGE}Don't forget to update some variables (e.g. full name, ssh config, dashboard title & notes) in the user specific settings at the top of README.org${NC}"
