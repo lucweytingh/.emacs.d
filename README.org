@@ -50,7 +50,6 @@ new user
   ; Main
   (setq my-fullname "Luc Weytingh")
   (setq my-email "lucweytingh@pm.me")
-  (setq my-user-path "/home/lucw/")
 
   ; Additional
   ; SSH configuration
@@ -59,19 +58,7 @@ new user
     ("server" "/ssh:lucw@49.13.225.4:/home/lucw/" "(set-bash)")
     ("gc" "/ssh:lucw@94.130.183.250:/home/lucw/" "(set-bash)")
     ))
-
-
-; Blacken is the Python auto-formatter. Uncomment and set this path to use it.
-(setq my-blacken-executable (concat my-user-path ".local/bin/black"))
 #+END_SRC
-
-Find the blacken executable path by running
-#+BEGIN_SRC shell
-which black
-#+END_SRC
-
-#+RESULTS:
-: ~/.local/bin/black
 
 ** startup screen
 Change title notes and banner on startup screen
@@ -2417,6 +2404,13 @@ python-shell-interpreter-args "-c exec('__import__(\\'readline\\')') -i")
 
 *** blacken (auto-formatting)
 #+BEGIN_SRC emacs-lisp
+; Blacken is the Python auto-formatter. Uncomment and set this path to use it.
+(setq my-blacken-executable
+      (let ((black-path (string-trim (shell-command-to-string "which black"))))
+        (if (or (string= black-path "") (not (file-executable-p black-path)))
+            ""
+          black-path)))
+
 (use-package blacken
   :if my-blacken-executable
   :straight t

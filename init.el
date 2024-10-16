@@ -47,20 +47,24 @@
 (put 'upcase-region 'disabled nil)
 (put 'erase-buffer 'disabled nil)
 
-;; Set fyle encoding system based on os
+;; Set the file encoding based on os
 (cond
  ((eq system-type 'darwin)
   ;; macOS-specific settings
   (prefer-coding-system 'utf-8-unix)
-  (setq-default buffer-file-coding-system 'utf-8-unix))
+  (setq-default buffer-file-coding-system 'utf-8-unix)
+  (setq coding-system-for-read 'utf-8-unix
+        coding-system-for-write 'utf-8-unix))
  ((eq system-type 'windows-nt)
-  ;; Windows-specific settings
-  (prefer-coding-system 'utf-8)
-  (setq-default buffer-file-coding-system 'utf-8-auto-unix))
+  ;; Message when Windows is detected
+  (message "Windows is not supported."))
  (t
-  ;; Default settings for other systems
-  (prefer-coding-system 'utf-8)
-  (setq-default buffer-file-coding-system 'utf-8-auto-unix)))
+  ;; Default settings for other systems (e.g., Ubuntu/Linux)
+  (prefer-coding-system 'utf-8-unix)
+  (setq-default buffer-file-coding-system 'utf-8-unix)
+  (setq coding-system-for-read 'utf-8-unix
+        coding-system-for-write 'utf-8-unix)))
+
 
 ;; Function that compiles org to el
 (defun org-to-el (&optional org-file)
