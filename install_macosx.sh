@@ -35,17 +35,17 @@ install_package "virtualenv"
 
 # Installation of straight.el
 if [ ! -d "$SCRIPT_DIR/straight/repos/straight.el" ]; then
-    echo "Installing straight package manager"
+    echo "[${RED}*${NC}] straight package manager not installed"
     mkdir -p "$SCRIPT_DIR/straight/repos"
     cd "$SCRIPT_DIR/straight/repos" || exit
     git clone https://github.com/radian-software/straight.el.git
     echo "Repo straight.el has been successfully cloned."
 else
-    echo "Repo straight.el is already installed."
+    echo "[${GREEN}*${NC}] straight.el is installed."
 fi
 
 # Remove BOM from README
-sed -i '1s/^\xEF\xBB\xBF//' "$SCRIPT_DIR/README.org"
+awk 'NR==1{sub(/^\xEF\xBB\xBF/, "")}1' "$SCRIPT_DIR/README.org" > temp && mv temp "$SCRIPT_DIR/README.org"
 
 echo "\n${GREEN}Installation complete${NC}"
 echo "${ORANGE}Don't forget to update some variables (e.g. full name, ssh config, dashboard title & notes) in the user specific settings at the top of README.org${NC}"
