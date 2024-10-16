@@ -27,3 +27,7 @@
 # Prot-files
 !repos/**/*
 /repos/scel/
+/repos/.DS_Store
+/repos/dotfiles/.DS_Store
+/repos/dotfiles/emacs/.DS_Store
+/repos/dotfiles/emacs/.emacs.d/.DS_Store
