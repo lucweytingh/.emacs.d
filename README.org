@@ -287,7 +287,7 @@ of the syntax class ')'."
 *** doom-palenight
 #+BEGIN_SRC emacs-lisp
   ;; doom-palenight-theme.el --- inspired by Material-PaleNight -*- no-byte-compile: t; -*-
-  (add-to-list 'custom-theme-load-path "~/.emacs.d/themes")
+  ;; (add-to-list 'custom-theme-load-path "~/.emacs.d/themes")
   (use-package doom-themes
     :straight t
     :config (load-theme 'doom-palenight t)
