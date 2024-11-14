@@ -22,6 +22,7 @@ install_package python3-pip
 install_package python3-venv
 install_package python3-ipython
 install_package black
+install_package w3m
 
 # Installation of straight.el
 if [ ! -d "$SCRIPT_DIR/straight/repos/straight.el" ]; then

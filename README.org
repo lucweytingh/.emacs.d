@@ -1503,6 +1503,27 @@ opens it.
 (with-eval-after-load 'python (define-key python-mode-map (kbd "C-c C-j") 'consult-imenu))
 #+END_SRC
 
+** open filepath in clipboard
+#+BEGIN_SRC emacs-lisp
+(defun open-clipboard-path ()
+  "Open a list of all pathnames in the `kill-ring`, then open the chosen one directly with `counsel-find-file`."
+  (interactive)
+  (let* ((paths (cl-remove-if-not #'file-exists-p kill-ring))
+         (selected-path (if paths
+                            (completing-read "Choose a path to open: " paths)
+                          (error "No valid file paths in the kill-ring"))))
+    (when (and selected-path (file-exists-p selected-path))
+      (find-file selected-path))))
+
+(with-eval-after-load 'org
+  (define-key org-mode-map (kbd "C-c C-x C-f") nil))
+
+(global-set-key (kbd "C-c C-x C-f") 'open-clipboard-path)
+#+END_SRC
+
+#+RESULTS:
+: open-clipboard-path
+
 
 * mx operations
 ** move-file
@@ -1766,8 +1787,10 @@ Taken from https://stackoverflow.com/questions/2416655/file-path-to-clipboard-in
 
 (setq tramp-default-method "ssh")
 
-
 #+END_SRC
+
+#+RESULTS:
+: ssh
 
 
 ** dwim-shell-command
@@ -1804,6 +1827,12 @@ Taken from https://stackoverflow.com/questions/2416655/file-path-to-clipboard-in
 (defun open-profile ()
    (interactive)
    (find-file "~/.zshrc"))
+
+(defun sudo-find-file (file-name)
+  "Like find file, but opens the file as root."
+  (interactive "FSudo Find File: ")
+  (let ((tramp-file-name (concat "/sudo::" (expand-file-name file-name))))
+    (counsel-find-file tramp-file-name)))
 #+END_SRC
 
 
@@ -2357,6 +2386,47 @@ Displaying images inline:
               'org-src-exec-blocks-up-until)))
 
 #+END_SRC
+
+** csv
+#+BEGIN_SRC emacs-lisp
+(use-package csv-mode
+  :straight t)
+
+(require 'color)
+
+;; (defun csv-highlight (&optional separator)
+;;   "Highlight CSV columns with different colors, applying only to column content."
+;;   (interactive (list (when current-prefix-arg (read-char "Separator: "))))
+;;   (font-lock-mode 1)
+;;   (let* ((separator (or separator ?\,))
+;;          (n (count-matches (string separator) (point-at-bol) (point-at-eol)))
+;;          (colors (cl-loop for i from 0 to 1.0 by (/ 2.0 n)
+;;                           collect (apply #'color-rgb-to-hex
+;;                                          (color-hsl-to-rgb i 0.3 0.5)))))
+;;     (cl-loop for i from 1 to n
+;;              for c in colors
+;;              for r = (format "^\\(?:[^%c\n]+%c\\)\\{%d\\}\\([^%c\n]+\\)" separator separator (1- i) separator)
+;;              do (font-lock-add-keywords nil `((,r (1 '(face (:foreground ,c)))))))))
+(defun csv-highlight (&optional separator)
+  (interactive (list (when current-prefix-arg (read-char "Separator: "))))
+  (font-lock-mode 1)
+  (let* ((separator (or separator ?\,))
+         (n (count-matches (string separator) (pos-bol) (pos-eol)))
+         (colors (cl-loop for i from 0 to 1.0 by (/ 2.0 n)
+                          collect (apply #'color-rgb-to-hex
+                                         (color-hsl-to-rgb i 0.3 0.5)))))
+    (cl-loop for i from 2 to n by 2
+             for c in colors
+             for r = (format "^\\([^%c\n]+%c\\)\\{%d\\}" separator separator i)
+             do (font-lock-add-keywords nil `((,r (1 '(face (:foreground ,c)))))))))
+
+(add-hook 'csv-mode-hook 'csv-highlight)
+(add-hook 'csv-mode-hook 'csv-align-mode)
+(add-hook 'csv-mode-hook '(lambda () (interactive) (toggle-truncate-lines nil))))
+#+END_SRC
+
+#+RESULTS:
+| (lambda nil (interactive) (toggle-truncate-lines nil)) | csv-align-mode | csv-highlight |
 
 ** elisp
 *** key operations
@@ -2960,17 +3030,25 @@ math mode already. We need to adapt the =yank-handled-properties= variable
 : init-xml
 
 ** supercollider
+If you want to use run supercollider from within emacs, install scel from the
+supercollider GUI using:
+#+BEGIN_EXAMPLE
+Quarks.install("https://github.com/supercollider/scel");
+#+END_EXAMPLE
+
 #+BEGIN_SRC emacs-lisp
 ;; Automatically clone the SuperCollider's scel repo if not already cloned
-(let ((scel-repo-dir (concat user-emacs-directory "repos/scel")))
-  (unless (file-directory-p scel-repo-dir)
-    (shell-command
-     (concat "git clone https://github.com/supercollider/scel.git " scel-repo-dir))))
+;; (let ((scel-repo-dir (concat user-emacs-directory "repos/scel")))
+;;   (unless (file-directory-p scel-repo-dir)
+;;     (shell-command
+;;      (concat "git clone https://github.com/supercollider/scel.git " scel-repo-dir))))
+
+(setq exec-path (append exec-path '("/Applications/SuperCollider.app/Contents/MacOS/")))
+(use-package w3m
+    :straight t)
 
 ;; Add SuperCollider's scel directory to load path
-(add-to-list 'load-path (concat user-emacs-directory "repos/scel/el"))
-
-;; Load sclang-mode
+(add-to-list 'load-path "~/Library/Application Support/SuperCollider/downloaded-quarks/scel/el")
 (require 'sclang)
 
 ;; Automatically enable sclang-mode for .scd files
@@ -2980,6 +3058,9 @@ math mode already. We need to adapt the =yank-handled-properties= variable
 (add-hook 'sclang-mode-hook
           (lambda ()
             (turn-on-font-lock))) ;; Enable syntax highlighting
+
+;; Prevent the sclang workspace from opening on server boot
+(setq sclang-show-workspace-on-startup nil)
 
 
 #+END_SRC

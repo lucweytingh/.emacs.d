@@ -27,6 +27,7 @@ install_package() {
 install_package "black"
 install_package "ipython"
 install_package "virtualenv"
+install_package "w3m"
 
 # Installation of straight.el
 if [ ! -d "$SCRIPT_DIR/straight/repos/straight.el" ]; then
