@@ -2387,6 +2387,21 @@ Displaying images inline:
 
 #+END_SRC
 
+** markdown
+#+BEGIN_SRC emacs-lisp
+(use-package markdown-mode
+  :straight t
+  :mode ("\\.md\\'" "\\.markdown\\'")
+  :config
+  ;; Enable syntax highlighting for fenced code blocks
+  (setq markdown-fontify-code-blocks-natively t)
+  ;; Use GitHub-flavored markdown
+  (setq markdown-command "pandoc --from=markdown --to=html5 --standalone --highlight-style=pygments")
+  ;; Keybindings for quick navigation and commands
+  (define-key markdown-mode-map (kbd "C-c C-s") 'markdown-insert-header)
+  (define-key markdown-mode-map (kbd "C-c C-l") 'markdown-insert-link))
+
+#+END_SRC
 ** csv
 #+BEGIN_SRC emacs-lisp
 (use-package csv-mode
