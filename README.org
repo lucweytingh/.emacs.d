@@ -406,7 +406,7 @@ in mode-line.
 (use-package diminish
   :straight t
   :config
-  (diminish 'projectile-mode)
+  ;; (diminish 'projectile-mode)
   (diminish 'auto-fill-mode))
 #+END_SRC
 
@@ -778,8 +778,8 @@ TODO: check keybindings
     (setq consult-narrow-key ">")
 
     ;; configure a function which returns the project root directory
-    (autoload 'projectile-project-root "projectile")
-    (setq consult-project-root-function #'projectile-project-root)
+    ;; (autoload 'projectile-project-root "projectile")
+    ;; (setq consult-project-root-function #'projectile-project-root)
 
     ;; NOTE: check `embark-consult' for previews that can be used with the
     ;; default minibuffer and Embark collections.
