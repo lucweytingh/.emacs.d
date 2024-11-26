@@ -1,3 +1,5 @@
+(message "[init.el] Initializing")
+
 ;; Increase gc to 500MB for quick & easy startup
 (setq gc-cons-threshold (* 1000 1024 1024))
 
@@ -79,12 +81,13 @@
         (write-region (point-min) (point-max) output-file)
         (message "Exported Org file to %s" output-file)))))
 
+(message "[init.el] Check if README.org exists")
 ;; Check if README.el exists, if not, run org-to-el with README.org
 (let ((readme-org (concat user-emacs-directory "README.org"))
       (readme-el (concat user-emacs-directory "README.el")))
   (unless (file-exists-p readme-el)
     (org-to-el readme-org)))
-
+(message "[init.el] README.org exists")
 ;; from protesilaos/dotfiles
 ;; I create an "el" version of my Org configuration file as a final step
 ;; before closing down Emacs.  This is done to load the latest version
@@ -103,5 +106,7 @@
       (org-babel-load-file org))))
 
 ;; Load README.org - my Emacs configuration
+(message "[init.el] Loading README")
 (org-babel-load-file (concat user-emacs-directory "README.org"))
+(message "[init.el] Finished inititalization")
 ;; (load-config-org-or-el "README")

@@ -1,6 +1,9 @@
 #+TITLE: emacs configuration
 #+OPTIONS: num:nil email:t
-#+HTML_HEAD: <link rel=stylesheet href="http://auc-computing.nl/css/aucc.css" type="text/css">
+
+#+BEGIN_SRC emacs-lisp
+(message "[README] Initializing ")
+#+END_SRC
 
 mid 2024 emacs config luc
 
@@ -27,8 +30,6 @@ Then cd to this directory and run
 ./install_linux.sh
 #+END_SRC
 
-
-
 ** if initial startup crashed with "invalid symbol"
 open README.org, remove and add the first line of the file, and save it,
 then restart
@@ -39,11 +40,13 @@ Update the variables in the "user-specific" section below
 Run M-x elpy-rpc-reinstall-virtualenv to setup python development
 Run M-x jedi:install-server to setup autocompletion for python
 
-
-
 * user specific
 settings that should be reconfigured if this config is transferred to a
 new user
+
+#+BEGIN_SRC emacs-lisp
+(message "[README] Loading * user-specific")
+#+END_SRC
 
 ** user specific variables
 #+BEGIN_SRC emacs-lisp
@@ -77,6 +80,10 @@ C-c C-m    avy-move-region
 #+END_SRC
 
 * startup
+#+BEGIN_SRC emacs-lisp
+(message "[README] Loading * startup")
+#+END_SRC
+
 ** os specific
 #+BEGIN_SRC emacs-lisp
 ;; macOS-specific settings
@@ -167,6 +174,10 @@ C-c C-m    avy-move-region
 #+END_SRC
 
 * appearance
+#+BEGIN_SRC emacs-lisp
+(message "[README] Loading * appearance")
+#+END_SRC
+
 ** syntax highlighting
 #+BEGIN_SRC emacs-lisp
   ;; Enable pretty syntax highlighting everywhere
@@ -523,10 +534,10 @@ to blacklist all i /don't/ want. for that, there exists =rich-minority=:
   (setq-default mode-line-format nil)
 
   ;; reduce height of empty mode-line
-  (set-face-attribute 'mode-line nil :foreground "white" :background nil :box nil :overline "#1e212e")
-  (set-face-attribute 'mode-line-inactive nil :background nil :box nil :foreground "#232635" :overline "#1e212e")
+  (set-face-attribute 'mode-line nil :foreground "white" :background 'unspecified :box nil :overline "#1e212e")
+  (set-face-attribute 'mode-line-inactive nil :background 'unspecified :box nil :foreground "#232635" :overline "#1e212e")
 
-  (set-face-attribute 'vertical-border nil :background nil :foreground "#676E95")
+  (set-face-attribute 'vertical-border nil :background 'unspecified :foreground "#676E95")
 
   ;; decorate header-line
   (set-face-attribute 'header-line nil
@@ -1341,6 +1352,10 @@ major-modes (like below for org-mode).
 
 
 * key operations
+#+BEGIN_SRC emacs-lisp
+(message "[README] Loading * key operations")
+#+END_SRC
+
 ** backward delete word
 =M-backspace= not only deletes the previous word, but also
 copies it, which I think is pretty annoying. Let's change this behaviour. The
@@ -1526,6 +1541,10 @@ opens it.
 
 
 * mx operations
+#+BEGIN_SRC emacs-lisp
+(message "[README] Loading * mx operations")
+#+END_SRC
+
 ** move-file
 Emacs's default way to write a file to a different location is
 #'write-file. This function saves the buffer to a new location, but leaves the
@@ -1921,15 +1940,6 @@ enables centered editing
 #+END_SRC
 
 
-** project management
-#+BEGIN_SRC emacs-lisp
-(use-package projectile
-  :straight t
-  :config
-  (projectile-mode +1)
-  (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map))
-#+END_SRC
-
 ** NAP
 Includes functions for automating repeated NAP processes
 #+BEGIN_SRC emacs-lisp
@@ -2150,7 +2160,15 @@ The user is prompted to choose from the available projects in the demos folder."
 : nap-run-napkin
 
 * major modes
+#+BEGIN_SRC emacs-lisp
+(message "[README] Loading * major modes")
+#+END_SRC
+
 ** html mode
+#+BEGIN_SRC emacs-lisp
+(message "[README] Loading ** html mode")
+#+END_SRC
+
 #+BEGIN_SRC emacs-lisp
 (add-to-list 'auto-mode-alist '("\\.html\\'" . html-mode))
 
@@ -2165,6 +2183,9 @@ The user is prompted to choose from the available projects in the demos folder."
 | my-html-mode-keybindings |
 
 ** org mode
+#+BEGIN_SRC emacs-lisp
+(message "[README] Loading ** org mode")
+#+END_SRC
 *** default template
 Auto-insert when opening file with certain suffix.
 #+BEGIN_SRC emacs-lisp
@@ -2206,7 +2227,7 @@ Auto-insert when opening file with certain suffix.
 : [my/org-template my/org-template]
 
 *** default behavior
-**** default settings
+*** default settings
 #+BEGIN_SRC emacs-lisp
     (load-library "org")
     ;; (push "/home/paul/org-mode/lisp" load-path)
@@ -2277,7 +2298,7 @@ Auto-insert when opening file with certain suffix.
 #+RESULTS:
 : package
 
-**** auto indentation
+*** auto indentation
 Setting this variable causes auto-indentation inside org-mode src blocks
 #+BEGIN_SRC emacs-lisp
 (setq org-src-tab-acts-natively t
@@ -2287,7 +2308,7 @@ Setting this variable causes auto-indentation inside org-mode src blocks
 
 #+RESULTS:
 : 0
-**** org src behavior
+*** org src behavior
 blacken a src block automatically.
 #+BEGIN_SRC emacs-lisp
 (setq org-src-tab-acts-natively t)
@@ -2389,6 +2410,10 @@ Displaying images inline:
 
 ** markdown
 #+BEGIN_SRC emacs-lisp
+(message "[README] Loading ** markdown mode")
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
 (use-package markdown-mode
   :straight t
   :mode ("\\.md\\'" "\\.markdown\\'")
@@ -2404,29 +2429,21 @@ Displaying images inline:
 #+END_SRC
 ** csv
 #+BEGIN_SRC emacs-lisp
+(message "[README] Loading ** csv mode")
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
 (use-package csv-mode
   :straight t)
 
 (require 'color)
 
-;; (defun csv-highlight (&optional separator)
-;;   "Highlight CSV columns with different colors, applying only to column content."
-;;   (interactive (list (when current-prefix-arg (read-char "Separator: "))))
-;;   (font-lock-mode 1)
-;;   (let* ((separator (or separator ?\,))
-;;          (n (count-matches (string separator) (point-at-bol) (point-at-eol)))
-;;          (colors (cl-loop for i from 0 to 1.0 by (/ 2.0 n)
-;;                           collect (apply #'color-rgb-to-hex
-;;                                          (color-hsl-to-rgb i 0.3 0.5)))))
-;;     (cl-loop for i from 1 to n
-;;              for c in colors
-;;              for r = (format "^\\(?:[^%c\n]+%c\\)\\{%d\\}\\([^%c\n]+\\)" separator separator (1- i) separator)
-;;              do (font-lock-add-keywords nil `((,r (1 '(face (:foreground ,c)))))))))
 (defun csv-highlight (&optional separator)
   (interactive (list (when current-prefix-arg (read-char "Separator: "))))
   (font-lock-mode 1)
-  (let* ((separator (or separator ?\,))
-         (n (count-matches (string separator) (pos-bol) (pos-eol)))
+  (let* ((separator (or separator ?,)) ; Default to comma
+         (n (count-matches (regexp-quote (string separator))
+                           (line-beginning-position) (line-end-position)))
          (colors (cl-loop for i from 0 to 1.0 by (/ 2.0 n)
                           collect (apply #'color-rgb-to-hex
                                          (color-hsl-to-rgb i 0.3 0.5)))))
@@ -2435,15 +2452,20 @@ Displaying images inline:
              for r = (format "^\\([^%c\n]+%c\\)\\{%d\\}" separator separator i)
              do (font-lock-add-keywords nil `((,r (1 '(face (:foreground ,c)))))))))
 
+
 (add-hook 'csv-mode-hook 'csv-highlight)
 (add-hook 'csv-mode-hook 'csv-align-mode)
-(add-hook 'csv-mode-hook '(lambda () (interactive) (toggle-truncate-lines nil))))
+(add-hook 'csv-mode-hook (lambda () (interactive) (toggle-truncate-lines nil)))
 #+END_SRC
 
 #+RESULTS:
-| (lambda nil (interactive) (toggle-truncate-lines nil)) | csv-align-mode | csv-highlight |
+: csv-highlight
 
 ** elisp
+#+BEGIN_SRC emacs-lisp
+(message "[README] Loading ** elisp mode")
+#+END_SRC
+
 *** key operations
 **** eval-buffer
 #+BEGIN_SRC emacs-lisp
@@ -2453,6 +2475,10 @@ Displaying images inline:
 #+END_SRC
 
 ** python
+#+BEGIN_SRC emacs-lisp
+(message "[README] Loading ** python mode")
+#+END_SRC
+
 *** interpreter
 make sure to install ipython=6.5.0
 #+BEGIN_SRC emacs-lisp
@@ -2600,6 +2626,10 @@ improves this behaviour.
 #+RESULTS:
 
 ** latex
+#+BEGIN_SRC emacs-lisp
+(message "[README] Loading ** latex mode")
+#+END_SRC
+
 *** default behaviour
 **** general
 #+BEGIN_SRC emacs-lisp
@@ -2818,6 +2848,10 @@ math mode already. We need to adapt the =yank-handled-properties= variable
 
 ** javascript
 #+BEGIN_SRC emacs-lisp
+(message "[README] Loading ** javascript mode")
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
 (use-package js2-mode
   :straight t
   :defer 20
@@ -2899,6 +2933,9 @@ math mode already. We need to adapt the =yank-handled-properties= variable
 
 
 ** shaders
+#+BEGIN_SRC emacs-lisp
+(message "[README] Loading ** shaders mode")
+#+END_SRC
 
 #+BEGIN_SRC emacs-lisp
 ;; Install and configure glsl-mode using use-package with straight.el
@@ -2942,6 +2979,10 @@ math mode already. We need to adapt the =yank-handled-properties= variable
 : t
 
 ** c++
+#+BEGIN_SRC emacs-lisp
+(message "[README] Loading ** c++ mode")
+#+END_SRC
+
 #+BEGIN_SRC emacs-lisp
 (use-package modern-cpp-font-lock
   :straight t)
@@ -3000,7 +3041,7 @@ math mode already. We need to adapt the =yank-handled-properties= variable
     :after eldoc irony
     :config
     (progn
-      (add-hook 'irony-mode-hook #'irony-eldoc)))
+      (add-hook 'irony-mode-hook 'irony-eldoc)))
 
 
 (defun my-c++-mode-settings ()
@@ -3033,6 +3074,10 @@ math mode already. We need to adapt the =yank-handled-properties= variable
 
 ** xml
 #+BEGIN_SRC emacs-lisp
+(message "[README] Loading ** xml mode")
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
 ;; Configure nxml-mode (built-in)
 (use-package nxml-mode
   :ensure nil  ;; `nxml-mode` is built-in, so no need to install
@@ -3045,6 +3090,10 @@ math mode already. We need to adapt the =yank-handled-properties= variable
 : init-xml
 
 ** supercollider
+#+BEGIN_SRC emacs-lisp
+(message "[README] Loading ** supercollider mode")
+#+END_SRC
+
 If you want to use run supercollider from within emacs, install scel from the
 supercollider GUI using:
 #+BEGIN_EXAMPLE
@@ -3052,34 +3101,41 @@ Quarks.install("https://github.com/supercollider/scel");
 #+END_EXAMPLE
 
 #+BEGIN_SRC emacs-lisp
-;; Automatically clone the SuperCollider's scel repo if not already cloned
-;; (let ((scel-repo-dir (concat user-emacs-directory "repos/scel")))
-;;   (unless (file-directory-p scel-repo-dir)
-;;     (shell-command
-;;      (concat "git clone https://github.com/supercollider/scel.git " scel-repo-dir))))
+(when (eq system-type 'darwin) ;; Check if macOS
+  ;; Add SuperCollider to exec-path
+  (setq exec-path (append exec-path '("/Applications/SuperCollider.app/Contents/MacOS/")))
 
-(setq exec-path (append exec-path '("/Applications/SuperCollider.app/Contents/MacOS/")))
-(use-package w3m
+  ;; Use w3m package
+  (use-package w3m
     :straight t)
 
-;; Add SuperCollider's scel directory to load path
-(add-to-list 'load-path "~/Library/Application Support/SuperCollider/downloaded-quarks/scel/el")
-(require 'sclang)
+  ;; Add SuperCollider's scel directory to load path
+  (add-to-list 'load-path "~/Library/Application Support/SuperCollider/downloaded-quarks/scel/el")
 
-;; Automatically enable sclang-mode for .scd files
-(add-to-list 'auto-mode-alist '("\\.scd\\'" . sclang-mode))
+  ;; Load sclang
+  (require 'sclang)
 
-;; Optional hook for customization
-(add-hook 'sclang-mode-hook
-          (lambda ()
-            (turn-on-font-lock))) ;; Enable syntax highlighting
+  ;; Automatically enable sclang-mode for .scd files
+  (add-to-list 'auto-mode-alist '("\\.scd\\'" . sclang-mode))
 
-;; Prevent the sclang workspace from opening on server boot
-(setq sclang-show-workspace-on-startup nil)
+  ;; Optional hook for customization
+  (add-hook 'sclang-mode-hook
+            (lambda ()
+              (turn-on-font-lock))) ;; Enable syntax highlighting
 
+  ;; Prevent the sclang workspace from opening on server boot
+  (setq sclang-show-workspace-on-startup nil))
+
+(when (eq system-type 'gnu/linux) ;; Else (Linux-specific configuration)
+     (message "[supercollider] No support implemented for Linux (yet)"))
 
 #+END_SRC
 
 #+RESULTS:
 | lambda | nil | (turn-on-font-lock)                                                                                            |                                                         |
 | lambda | nil | (if (string= (buffer-name) sclang-post-buffer) (progn (setq mode-line-format '(- sclang-server-info-string)))) | (define-key sclang-mode-map  sclang-server-key-map) |
+
+* Log
+#+BEGIN_SRC emacs-lisp
+(message "[README] finished Initialization")
+#+END_SRC
