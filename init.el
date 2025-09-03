@@ -1,3 +1,4 @@
+;; -*- lexical-binding: t -*-
 (message "[init.el] Initializing")
 
 ;; Increase gc to 500MB for quick & easy startup
@@ -7,41 +8,35 @@
 ;; GC when idling. Also see below.
 (run-with-idle-timer 30 t (lambda () (garbage-collect)))
 
-(require 'package)
-
-(setq package-archives '(("melpa" . "https://melpa.org/packages/")
-                 ("gnu"          . "https://elpa.gnu.org/packages/")
-                ("melpa"        . "https://stable.melpa.org/packages/")
-                 ))
-
-(package-initialize)
-
-(eval-after-load 'gnutls
-  '(add-to-list 'gnutls-trustfiles "/etc/ssl/cert.pem"))
-
-(eval-when-compile
-  (require 'use-package))
-
-(require 'bind-key)
-(setq use-package-always-ensure t)
-
-;; add straight as package manager
+;; Bootstrap straight.el package manager
+(message "[init.el] Bootstrapping straight.el...")
 (defvar bootstrap-version)
 (let ((bootstrap-file
        (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
       (bootstrap-version 5))
   (unless (file-exists-p bootstrap-file)
+    (message "Installing straight.el...")
     (with-current-buffer
         (url-retrieve-synchronously
          "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
          'silent 'inhibit-cookies)
       (goto-char (point-max))
       (eval-print-last-sexp)))
-  (load bootstrap-file nil 'nomessage))
+  (condition-case err
+      (load bootstrap-file nil 'nomessage)
+    (error
+     (message "Failed to load straight.el: %s" err)
+     (error "Cannot continue without straight.el"))))
 
+(message "[init.el] Installing core packages...")
+;; Install and configure use-package via straight.el
 (straight-use-package 'use-package)
+(straight-use-package 'bind-key)
 
-
+;; Configure use-package to use straight.el
+(setq use-package-always-ensure t)
+(setq use-package-verbose t)
+(setq use-package-ensure-function 'straight-use-package)
 
 ;; Disable asking for confirmation for the following commands
 (put 'narrow-to-region 'disabled nil)
@@ -67,6 +62,9 @@
   (setq coding-system-for-read 'utf-8-unix
         coding-system-for-write 'utf-8-unix)))
 
+;; Ensure org-mode is loaded before using org functions
+(message "[init.el] Loading org-mode...")
+(require 'org)
 
 ;; Function that compiles org to el
 (defun org-to-el (&optional org-file)
@@ -81,32 +79,25 @@
         (write-region (point-min) (point-max) output-file)
         (message "Exported Org file to %s" output-file)))))
 
-(message "[init.el] Check if README.org exists")
-;; Check if README.el exists, if not, run org-to-el with README.org
+(message "[init.el] Checking README.el status...")
+;; Check if README.el exists, if not, generate it from README.org
 (let ((readme-org (concat user-emacs-directory "README.org"))
       (readme-el (concat user-emacs-directory "README.el")))
-  (unless (file-exists-p readme-el)
-    (org-to-el readme-org)))
-(message "[init.el] README.org exists")
-;; from protesilaos/dotfiles
-;; I create an "el" version of my Org configuration file as a final step
-;; before closing down Emacs.  This is done to load the latest version
-;; of my code upon startup.
-;;
-;; Also helps with initialisation times.  Not that I care too much about
-;; those… Hence why I no longer bother with deferring package loading
-;; either by default or on a case-by-case basis.
-(defun load-config-org-or-el (fname)
-  (let* ((conf (concat user-emacs-directory fname))
-         (el (concat conf ".el"))
-         (org (concat conf ".org")))
-    (if (file-exists-p el)
-        (load-file el)
-      (use-package org-mode :straight (:type built-in))
-      (org-babel-load-file org))))
+  (if (file-exists-p readme-el)
+      (message "README.el found, no generation needed")
+    (message "README.el not found, generating from README.org...")
+    (condition-case err
+        (org-to-el readme-org)
+      (error
+       (message "Failed to generate README.el: %s" err)
+       (message "Please ensure org-mode is available")))))
+(message "[init.el] README.el check complete")
 
 ;; Load README.org - my Emacs configuration
 (message "[init.el] Loading README")
-(org-babel-load-file (concat user-emacs-directory "README.org"))
-(message "[init.el] Finished inititalization")
-;; (load-config-org-or-el "README")
+(condition-case err
+    (org-babel-load-file (concat user-emacs-directory "README.org"))
+  (error
+   (message "Failed to load README.org: %s" err)
+   (message "Please check the file for syntax errors")))
+(message "[init.el] Finished initialization")

@@ -11,7 +11,7 @@ mid 2024 emacs config luc
 Clone this repository in your user's home directory
 
 ** mac
-Install emacs 29 from https://emacsformacosx.com/
+Install emacs 30 from https://emacsformacosx.com/
 
 Then, open a terminal, cd to this directory and run
 #+BEGIN_SRC shell
@@ -19,7 +19,7 @@ Then, open a terminal, cd to this directory and run
 #+END_SRC
 
 ** linux
-Install emacs 29 by running
+Install emacs 30 by running
 #+BEGIN_SRC shell
 sudo add-apt-repository ppa:ubuntuhandbook1/emacs
 sudo apt install emacs emacs-common
@@ -215,6 +215,7 @@ Turn off all windows decoration.
 
 (defcustom do-whitespace-cleanup t
   "Perform whitespace-cleanup on save."
+  :type 'boolean
   :group 'whitespace)
 
 (make-variable-buffer-local 'do-whitespace-cleanup)
@@ -269,17 +270,17 @@ Turn off all windows decoration.
 (show-paren-mode t)
 (setq-default show-paren-style 'parenthesis) ; highlight brackets only
 
-(defadvice show-paren-function
-    (after show-matching-paren-offscreen activate)
+(defun show-matching-paren-offscreen ()
   "If the matching paren is offscreen, show the matching line in
 the echo area. Has no effect if the character before point is not
 of the syntax class ')'."
-  (interactive)
   (let* ((cb (char-before (point)))
-   (matching-text (and cb
-           (char-equal (char-syntax cb) ?\) )
-           (blink-matching-open))))
+         (matching-text (and cb
+                             (char-equal (char-syntax cb) ?\) )
+                             (blink-matching-open))))
     (when matching-text (message matching-text))))
+
+(advice-add 'show-paren-function :after #'show-matching-paren-offscreen)
 #+END_SRC
 #+RESULTS:
 : show-paren-function
@@ -906,7 +907,6 @@ Smart action filtering based on pointer location
                     :files ("embark.el" "embark-org.el" "embark-consult.el"))
   :demand
   :diminish embark-collect-zebra-minor-mode
-  :after prot-minibuffer
   :config
   (setq embark-collect-initial-view-alist
         '((file . list)
@@ -931,9 +931,6 @@ Smart action filtering based on pointer location
   ;;         (which-key--show-keymap "Embark" map nil nil 'no-paging)
   ;;         #'which-key--hide-popup-ignore-command)
   ;;       embark-become-indicator embark-action-indicator)
-  :hook ((minibuffer-setup-hook . embark-collect-completions-after-input)
-         (embark-post-action-hook . embark-collect--update-linked)
-         (embark-collect-mode-hook . prot-embark-completions-cursor))
   :bind (("C-r" . embark-act)
          :map minibuffer-local-completion-map
          ("C-r" . embark-act)
@@ -954,35 +951,39 @@ Smart action filtering based on pointer location
   :straight t
   :demand
   :after (embark consult)
+  :config
+  (message "Loading embark-consult...")
+  (require 'embark-consult)
   :hook (embark-collect-mode-hook . embark-consult-preview-minor-mode))
 
-  (use-package prot-embark
-    :straight (:type built-in)
-    :demand
-    :after embark
-    :hook ((minibuffer-exit-hook . prot-embark-clear-live-buffers)
-           (embark-collect-post-revert-hook . prot-embark-collect-fit-window)
-           (embark-collect-mode-hook . prot-embark-hl-line)
-           (embark-collect-mode-hook . prot-embark-display-line-numbers))
-    ;; NOTE: to switch to the live collection buffer, I also use
-    ;; `prot-minibuffer-focus-mini-or-completions' which is bound to
-    ;; "s-v".
-    :bind (:map embark-collect-mode-map
-           ("h" . prot-simple-describe-symbol)  ; from `prot-simple.el'
-           ("C-g" . prot-embark-keyboard-quit)
-           ("C-k" . prot-embark-collection-kill-line)
-           ("C-M-n" . prot-embark-completions-act-next)
-           ("C-M-p" . prot-embark-completions-act-previous)
-           ("C-M-j" . prot-embark-completions-act-current)
-           ("C-M-v" . prot-embark-consult-preview-toggle) ; "view", "visualise" mnemonic
-           ("C-n" . prot-embark-next-line-or-mini)
-           ("C-p" . prot-embark-previous-line-or-mini)
-           ("M-F" . prot-embark-collection-flush-lines) ; M-S-f like M-S-5 (M-%)
-           ("M-K" . prot-embark-collection-keep-lines)  ; same principle as right above
-           :map minibuffer-local-completion-map
-           ("C-n" . prot-embark-switch-to-completions-top)
-           ("C-p" . prot-embark-switch-to-completions-bottom)
-           ("C-l" . prot-embark-completions-toggle)))
+  ;; Temporarily disable prot-embark to avoid loading issues
+  ;; (use-package prot-embark
+  ;;   :straight (:type built-in)
+  ;;   :demand
+  ;;   :after embark
+  ;;   :hook ((minibuffer-exit-hook . prot-embark-clear-live-buffers)
+  ;;          (embark-collect-post-revert-hook . prot-embark-collect-fit-window)
+  ;;          (embark-collect-mode-hook . prot-embark-hl-line)
+  ;;          (embark-collect-mode-hook . prot-embark-display-line-numbers))
+  ;;   ;; NOTE: to switch to the live collection buffer, I also use
+  ;;   ;; `prot-minibuffer-focus-mini-or-completions' which is bound to
+  ;;   ;; "s-v".
+  ;;   :bind (:map embark-collect-mode-map
+  ;;          ("h" . prot-simple-describe-symbol)  ; from `prot-simple.el'
+  ;;          ("C-g" . prot-embark-keyboard-quit)
+  ;;          ("C-k" . prot-embark-collection-kill-line)
+  ;;          ("C-M-n" . prot-embark-completions-act-next)
+  ;;          ("C-M-p" . prot-embark-completions-act-previous)
+  ;;          ("C-M-j" . prot-embark-completions-act-current)
+  ;;          ("C-M-v" . prot-embark-consult-preview-toggle) ; "view", "visualise" mnemonic
+  ;;          ("C-n" . prot-embark-next-line-or-mini)
+  ;;          ("C-p" . prot-embark-previous-line-or-mini)
+  ;;          ("M-F" . prot-embark-collection-flush-lines) ; M-S-f like M-S-5 (M-%)
+  ;;          ("M-K" . prot-embark-collection-keep-lines)  ; same principle as right above
+  ;;          :map minibuffer-local-completion-map
+  ;;          ("C-n" . prot-embark-switch-to-completions-top)
+  ;;          ("C-p" . prot-embark-switch-to-completions-bottom)
+  ;;          ("C-l" . prot-embark-completions-toggle)))
 #+END_SRC
 
 #+RESULTS:
@@ -1125,7 +1126,7 @@ ace-window config
 Define how to resize windows
 #+BEGIN_SRC emacs-lisp
 (defun resize-window (inc)
-  (interagctive "p")
+  (interactive "p")
   (let* ((base (event-basic-type last-command-event))
            (step (pcase base
                    ((or ?f ?n) inc)
@@ -1523,7 +1524,7 @@ opens it.
 (defun open-clipboard-path ()
   "Open a list of all pathnames in the `kill-ring`, then open the chosen one directly with `counsel-find-file`."
   (interactive)
-  (let* ((paths (cl-remove-if-not #'file-exists-p kill-ring))
+  (let* ((paths (remove-if-not #'file-exists-p kill-ring))
          (selected-path (if paths
                             (completing-read "Choose a path to open: " paths)
                           (error "No valid file paths in the kill-ring"))))
@@ -2031,7 +2032,7 @@ The user is prompted to choose from the available projects in the demos folder."
   "Get a list of all executable files in the bin/Release-* directory of nap-framework-dir, excluding directories."
   (let* ((release-dir (car (directory-files (concat nap-framework-dir "/bin/") t "^Release-")))
          (files (and release-dir (directory-files release-dir t "^[^.].*"))))
-    (cl-remove-if (lambda (file)
+    (remove-if (lambda (file)
                     (or (file-directory-p file) (not (file-executable-p file))))
                   files)))
 
@@ -2291,7 +2292,7 @@ Auto-insert when opening file with certain suffix.
 
     (setq org-confirm-babel-evaluate 'my-org-confirm-babel-evaluate)
 
-    (require 'package)
+
 
 #+END_SRC
 
@@ -2444,10 +2445,10 @@ Displaying images inline:
   (let* ((separator (or separator ?,)) ; Default to comma
          (n (count-matches (regexp-quote (string separator))
                            (line-beginning-position) (line-end-position)))
-         (colors (cl-loop for i from 0 to 1.0 by (/ 2.0 n)
+         (colors (loop for i from 0 to 1.0 by (/ 2.0 n)
                           collect (apply #'color-rgb-to-hex
                                          (color-hsl-to-rgb i 0.3 0.5)))))
-    (cl-loop for i from 2 to n by 2
+    (loop for i from 2 to n by 2
              for c in colors
              for r = (format "^\\([^%c\n]+%c\\)\\{%d\\}" separator separator i)
              do (font-lock-add-keywords nil `((,r (1 '(face (:foreground ,c)))))))))
@@ -2582,9 +2583,6 @@ TODO: review
 (push '("/Pipfile$" . conf-mode) auto-mode-alist)
 (push '("/Pipfile.lock$" . js2-mode) auto-mode-alist)
 #+END_SRC
-
-
-: ((/Pipfile.lock$ . js2-mode) (/Pipfile$ . conf-mode) (\.xsh$ . python-mode) (\.ipynb$ . js2-mode) (\.odc\' . archive-mode) (\.odf\' . archive-mode) (\.odi\' . archive-mode) (\.otp\' . archive-mode) (\.odp\' . archive-mode) (\.otg\' . archive-mode) (\.odg\' . archive-mode) (\.ots\' . archive-mode) (\.ods\' . archive-mode) (\.odm\' . archive-mode) (\.ott\' . archive-mode) (\.odt\' . archive-mode) (/Pipfile.lock$ . js2-mode) (/Pipfile$ . conf-mode) (\.xsh$ . python-mode) (\.py\' . python-mode) (\.ipynb$ . js2-mode) (\.pdf\' . pdf-view-mode) (\.ino\' . arduino-mode) (\.pde\' . arduino-mode) (\.hva\' . latex-mode) (\.ipynb\' . ein:ipynb-mode) (\(?:\(?:\.\(?:b\(?:\(?:abel\|ower\)rc\)\|json\(?:ld\)?\)\|composer\.lock\)\'\) . json-mode) (\.\(?:md\|markdown\|mkd\|mdown\|mkdn\|mdwn\)\' . markdown-mode) (\.lp\' . pasp-mode) (/git-rebase-todo\' . git-rebase-mode) (\.ts\' . typescript-mode) (\.gpg\(~\|\.~[0-9]+~\)?\' nil epa-file) (\.elc\' . elisp-byte-code-mode) (\.\(?:3fr\|a\(?:rw\|vs\)\|bmp[23]?\|c\(?:als?\|myka?\|r[2w]\|u[rt]\)\|d\(?:c[mrx]\|ds\|ng\|px\)\|exr\|f\(?:ax\|its\)\|gif\(?:87\)?\|hrz\|ic\(?:on\|[bo]\)\|j\(?:2c\|ng\|p\(?:eg\|[2cg]\)\)\|k\(?:25\|dc\)\|m\(?:iff\|ng\|rw\|s\(?:l\|vg\)\|tv\)\|nef\|o\(?:rf\|tb\)\|p\(?:bm\|c\(?:ds\|[dltx]\)\|db\|ef\|gm\|i\(?:ct\|x\)\|jpeg\|n\(?:g\(?:24\|32\|8\)\|[gm]\)\|pm\|sd\|tif\|wp\)\|r\(?:a[fs]\|gb[ao]?\|l[ae]\)\|s\(?:c[rt]\|fw\|gi\|r[2f]\|un\|vgz?\)\|t\(?:ga\|i\(?:ff\(?:64\)?\|le\|m\)\|tf\)\|uyvy\|v\(?:da\|i\(?:car\|d\|ff\)\|st\)\|w\(?:bmp\|pg\)\|x\(?:3f\|bm\|cf\|pm\|[cv]\)\|y\(?:cbcra?\|uv\)\)\' . image-mode) (\.zst\' nil jka-compr) (\.dz\' nil jka-compr) (\.xz\' nil jka-compr) (\.lzma\' nil jka-compr) (\.lz\' nil jka-compr) (\.g?z\' nil jka-compr) (\.bz2\' nil jka-compr) (\.Z\' nil jka-compr) (\.vr[hi]?\' . vera-mode) (\(?:\.\(?:rbw?\|ru\|rake\|thor\|jbuilder\|rabl\|gemspec\|podspec\)\|/\(?:Gem\|Rake\|Cap\|Thor\|Puppet\|Berks\|Brew\|Vagrant\|Guard\|Pod\)file\)\' . ruby-mode) (\.re?st\' . rst-mode) (\.py[iw]?\' . python-mode) (\.m\' . octave-maybe-mode) (\.less\' . less-css-mode) (\.scss\' . scss-mode) (\.awk\' . awk-mode) (\.\(u?lpc\|pike\|pmod\(\.in\)?\)\' . pike-mode) (\.idl\' . idl-mode) (\.java\' . java-mode) (\.m\' . objc-mode) (\.ii\' . c++-mode) (\.i\' . c-mode) (\.lex\' . c-mode) (\.y\(acc\)?\' . c-mode) (\.h\' . c-or-c++-mode) (\.c\' . c-mode) (\.\(CC?\|HH?\)\' . c++-mode) (\.[ch]\(pp\|xx\|\+\+\)\' . c++-mode) (\.\(cc\|hh\)\' . c++-mode) (\.\(bat\|cmd\)\' . bat-mode) (\.[sx]?html?\(\.[a-zA-Z_]+\)?\' . mhtml-mode) (\.svgz?\' . image-mode) (\.svgz?\' . xml-mode) (\.x[bp]m\' . image-mode) (\.x[bp]m\' . c-mode) (\.p[bpgn]m\' . image-mode) (\.tiff?\' . image-mode) (\.gif\' . image-mode) (\.png\' . image-mode) (\.jpe?g\' . image-mode) (\.te?xt\' . text-mode) (\.[tT]e[xX]\' . tex-mode) (\.ins\' . tex-mode) (\.ltx\' . latex-mode) (\.dtx\' . doctex-mode) (\.org\' . org-mode) (\.dir-locals\(?:-2\)?\.el\' . lisp-data-mode) (eww-bookmarks\' . lisp-data-mode) (tramp\' . lisp-data-mode) (/archive-contents\' . lisp-data-mode) (places\' . lisp-data-mode) (\.emacs-places\' . lisp-data-mode) (\.el\' . emacs-lisp-mode) (Project\.ede\' . emacs-lisp-mode) (\.\(scm\|stk\|ss\|sch\)\' . scheme-mode) (\.l\' . lisp-mode) (\.li?sp\' . lisp-mode) (\.[fF]\' . fortran-mode) (\.for\' . fortran-mode) (\.p\' . pascal-mode) (\.pas\' . pascal-mode) (\.\(dpr\|DPR\)\' . delphi-mode) (\.\([pP]\([Llm]\|erl\|od\)\|al\)\' . perl-mode) (Imakefile\' . makefile-imake-mode) (Makeppfile\(?:\.mk\)?\' . makefile-makepp-mode) (\.makepp\' . makefile-makepp-mode) (\.mk\' . makefile-bsdmake-mode) (\.make\' . makefile-bsdmake-mode) (GNUmakefile\' . makefile-gmake-mode) ([Mm]akefile\' . makefile-bsdmake-mode) (\.am\' . makefile-automake-mode) (\.texinfo\' . texinfo-mode) (\.te?xi\' . texinfo-mode) (\.[sS]\' . asm-mode) (\.asm\' . asm-mode) (\.css\' . css-mode) (\.mixal\' . mixal-mode) (\.gcov\' . compilation-mode) (/\.[a-z0-9-]*gdbinit . gdb-script-mode) (-gdb\.gdb . gdb-script-mode) ([cC]hange\.?[lL]og?\' . change-log-mode) ([cC]hange[lL]og[-.][0-9]+\' . change-log-mode) (\$CHANGE_LOG\$\.TXT . change-log-mode) (\.scm\.[0-9]*\' . scheme-mode) (\.[ckz]?sh\'\|\.shar\'\|/\.z?profile\' . sh-mode) (\.bash\' . sh-mode) (/PKGBUILD\' . sh-mode) (\(/\|\`\)\.\(bash_\(profile\|history\|log\(in\|out\)\)\|z?log\(in\|out\)\)\' . sh-mode) (\(/\|\`\)\.\(shrc\|zshrc\|m?kshrc\|bashrc\|t?cshrc\|esrc\)\' . sh-mode) (\(/\|\`\)\.\([kz]shenv\|xinitrc\|startxrc\|xsession\)\' . sh-mode) (\.m?spec\' . sh-mode) (\.m[mes]\' . nroff-mode) (\.man\' . nroff-mode) (\.sty\' . latex-mode) (\.cl[so]\' . latex-mode) (\.bbl\' . latex-mode) (\.bib\' . bibtex-mode) (\.bst\' . bibtex-style-mode) (\.sql\' . sql-mode) (\(acinclude\|aclocal\|acsite\)\.m4\' . autoconf-mode) (\.m[4c]\' . m4-mode) (\.mf\' . metafont-mode) (\.mp\' . metapost-mode) (\.vhdl?\' . vhdl-mode) (\.article\' . text-mode) (\.letter\' . text-mode) (\.i?tcl\' . tcl-mode) (\.exp\' . tcl-mode) (\.itk\' . tcl-mode) (\.icn\' . icon-mode) (\.sim\' . simula-mode) (\.mss\' . scribe-mode) (\.f9[05]\' . f90-mode) (\.f0[38]\' . f90-mode) (\.indent\.pro\' . fundamental-mode) (\.\(pro\|PRO\)\' . idlwave-mode) (\.srt\' . srecode-template-mode) (\.prolog\' . prolog-mode) (\.tar\' . tar-mode) (\.\(arc\|zip\|lzh\|lha\|zoo\|[jew]ar\|xpi\|rar\|cbr\|7z\|squashfs\|ARC\|ZIP\|LZH\|LHA\|ZOO\|[JEW]AR\|XPI\|RAR\|CBR\|7Z\|SQUASHFS\)\' . archive-mode) (\.oxt\' . archive-mode) (\.\(deb\|[oi]pk\)\' . archive-mode) (\`/tmp/Re . text-mode) (/Message[0-9]*\' . text-mode) (\`/tmp/fol/ . text-mode) (\.oak\' . scheme-mode) (\.sgml?\' . sgml-mode) (\.x[ms]l\' . xml-mode) (\.dbk\' . xml-mode) (\.dtd\' . sgml-mode) (\.ds\(ss\)?l\' . dsssl-mode) (\.js[mx]?\' . javascript-mode) (\.har\' . javascript-mode) (\.json\' . javascript-mode) (\.[ds]?va?h?\' . verilog-mode) (\.by\' . bovine-grammar-mode) (\.wy\' . wisent-grammar-mode) ([:/\]\..*\(emacs\|gnus\|viper\)\' . emacs-lisp-mode) (\`\..*emacs\' . emacs-lisp-mode) ([:/]_emacs\' . emacs-lisp-mode) (/crontab\.X*[0-9]+\' . shell-script-mode) (\.ml\' . lisp-mode) (\.ld[si]?\' . ld-script-mode) (ld\.?script\' . ld-script-mode) (\.xs\' . c-mode) (\.x[abdsru]?[cnw]?\' . ld-script-mode) (\.zone\' . dns-mode) (\.soa\' . dns-mode) (\.asd\' . lisp-mode) (\.\(asn\|mib\|smi\)\' . snmp-mode) (\.\(as\|mi\|sm\)2\' . snmpv2-mode) (\.\(diffs?\|patch\|rej\)\' . diff-mode) (\.\(dif\|pat\)\' . diff-mode) (\.[eE]?[pP][sS]\' . ps-mode) (\.\(?:PDF\|DVI\|OD[FGPST]\|DOCX\|XLSX?\|PPTX?\|pdf\|djvu\|dvi\|od[fgpst]\|docx\|xlsx?\|pptx?\)\' . doc-view-mode-maybe) (configure\.\(ac\|in\)\' . autoconf-mode) (\.s\(v\|iv\|ieve\)\' . sieve-mode) (BROWSE\' . ebrowse-tree-mode) (\.ebrowse\' . ebrowse-tree-mode) (#\*mail\* . mail-mode) (\.g\' . antlr-mode) (\.mod\' . m2-mode) (\.ses\' . ses-mode) (\.docbook\' . sgml-mode) (\.com\' . dcl-mode) (/config\.\(?:bat\|log\)\' . fundamental-mode) (/\.\(authinfo\|netrc\)\' . authinfo-mode) (\.\(?:[iI][nN][iI]\|[lL][sS][tT]\|[rR][eE][gG]\|[sS][yY][sS]\)\' . conf-mode) (\.la\' . conf-unix-mode) (\.ppd\' . conf-ppd-mode) (java.+\.conf\' . conf-javaprop-mode) (\.properties\(?:\.[a-zA-Z0-9._-]+\)?\' . conf-javaprop-mode) (\.toml\' . conf-toml-mode) (\.desktop\' . conf-desktop-mode) (/\.redshift\.conf\' . conf-windows-mode) (\`/etc/\(?:DIR_COLORS\|ethers\|.?fstab\|.*hosts\|lesskey\|login\.?de\(?:fs\|vperm\)\|magic\|mtab\|pam\.d/.*\|permissions\(?:\.d/.+\)?\|protocols\|rpc\|services\)\' . conf-space-mode) (\`/etc/\(?:acpid?/.+\|aliases\(?:\.d/.+\)?\|default/.+\|group-?\|hosts\..+\|inittab\|ksysguarddrc\|opera6rc\|passwd-?\|shadow-?\|sysconfig/.+\)\' . conf-mode) ([cC]hange[lL]og[-.][-0-9a-z]+\' . change-log-mode) (/\.?\(?:gitconfig\|gnokiirc\|hgrc\|kde.*rc\|mime\.types\|wgetrc\)\' . conf-mode) (/\.\(?:asound\|enigma\|fetchmail\|gltron\|gtk\|hxplayer\|mairix\|mbsync\|msmtp\|net\|neverball\|nvidia-settings-\|offlineimap\|qt/.+\|realplayer\|reportbug\|rtorrent\.\|screen\|scummvm\|sversion\|sylpheed/.+\|xmp\)rc\' . conf-mode) (/\.\(?:gdbtkinit\|grip\|mpdconf\|notmuch-config\|orbital/.+txt\|rhosts\|tuxracer/options\)\' . conf-mode) (/\.?X\(?:default\|resource\|re\)s\> . conf-xdefaults-mode) (/X11.+app-defaults/\|\.ad\' . conf-xdefaults-mode) (/X11.+locale/.+/Compose\' . conf-colon-mode) (/X11.+locale/compose\.dir\' . conf-javaprop-mode) (\.~?[0-9]+\.[0-9][-.0-9]*~?\' nil t) (\.\(?:orig\|in\|[bB][aA][kK]\)\' nil t) ([/.]c\(?:on\)?f\(?:i?g\)?\(?:\.[a-zA-Z0-9._-]+\)?\' . conf-mode-maybe) (\.[1-9]\' . nroff-mode) (\.art\' . image-mode) (\.avs\' . image-mode) (\.bmp\' . image-mode) (\.cmyk\' . image-mode) (\.cmyka\' . image-mode) (\.crw\' . image-mode) (\.dcr\' . image-mode) (\.dcx\' . image-mode) (\.dng\' . image-mode) (\.dpx\' . image-mode) (\.fax\' . image-mode) (\.hrz\' . image-mode) (\.icb\' . image-mode) (\.icc\' . image-mode) (\.icm\' . image-mode) (\.ico\' . image-mode) (\.icon\' . image-mode) (\.jbg\' . image-mode) (\.jbig\' . image-mode) (\.jng\' . image-mode) (\.jnx\' . image-mode) (\.miff\' . image-mode) (\.mng\' . image-mode) (\.mvg\' . image-mode) (\.otb\' . image-mode) (\.p7\' . image-mode) (\.pcx\' . image-mode) (\.pdb\' . image-mode) (\.pfa\' . image-mode) (\.pfb\' . image-mode) (\.picon\' . image-mode) (\.pict\' . image-mode) (\.rgb\' . image-mode) (\.rgba\' . image-mode) (\.tga\' . image-mode) (\.wbmp\' . image-mode) (\.webp\' . image-mode) (\.wmf\' . image-mode) (\.wpg\' . image-mode) (\.xcf\' . image-mode) (\.xmp\' . image-mode) (\.xwd\' . image-mode) (\.yuv\' . image-mode) (\.tgz\' . tar-mode) (\.tbz2?\' . tar-mode) (\.txz\' . tar-mode) (\.tzst\' . tar-mode) (\.drv\' . latex-mode))
 
 *** docstring
 =M-q= messes up docstrings formatting. luckily, someone wrote a package which
@@ -3006,8 +3004,19 @@ math mode already. We need to adapt the =yank-handled-properties= variable
   :straight t
   :config
   (progn
-    ;; If irony server was never installed, install it.
-    (unless (irony--find-server-executable) (call-interactively #'irony-install-server))
+    ;; Delay server installation to ensure irony is fully loaded
+    (run-with-idle-timer 2 nil
+      (lambda ()
+        (when (and (fboundp 'irony--find-server-executable)
+                   (fboundp 'irony-install-server))
+          ;; Check if irony server is installed, if not, try to install it automatically
+          (unless (irony--find-server-executable)
+            (message "Irony server not found. Attempting to install...")
+            (condition-case err
+                (irony-install-server)
+              (error
+               (message "Failed to install irony server automatically: %s" err)
+               (message "Please run M-x irony-install-server manually"))))))
 
     (add-hook 'c++-mode-hook 'irony-mode)
     (add-hook 'c-mode-hook 'irony-mode)
@@ -3067,6 +3076,18 @@ math mode already. We need to adapt the =yank-handled-properties= variable
 
 ;; Bind the function to C-c o
 (global-set-key (kbd "C-c o") 'switch-cpp-h-file)
+
+;; Helper function to install irony server
+(defun install-irony-server-if-needed ()
+  "Install irony server if it's not already installed."
+  (interactive)
+  (if (irony--find-server-executable)
+      (message "Irony server is already installed.")
+    (message "Installing irony server...")
+    (irony-install-server)))
+
+;; Bind the function to a convenient key
+(global-set-key (kbd "C-c i") 'install-irony-server-if-needed)
 #+END_SRC
 
 #+RESULTS:
@@ -3091,43 +3112,39 @@ math mode already. We need to adapt the =yank-handled-properties= variable
 
 ** supercollider
 #+BEGIN_SRC emacs-lisp
-(message "[README] Loading ** supercollider mode")
-#+END_SRC
+;; (message "[README] Loading ** supercollider mode")
 
-If you want to use run supercollider from within emacs, install scel from the
-supercollider GUI using:
-#+BEGIN_EXAMPLE
-Quarks.install("https://github.com/supercollider/scel");
-#+END_EXAMPLE
+;; If you want to use run supercollider from within emacs, install scel from the
+;; supercollider GUI using:
+;; Quarks.install("https://github.com/supercollider/scel");
 
-#+BEGIN_SRC emacs-lisp
-(when (eq system-type 'darwin) ;; Check if macOS
-  ;; Add SuperCollider to exec-path
-  (setq exec-path (append exec-path '("/Applications/SuperCollider.app/Contents/MacOS/")))
+;; (when (eq system-type 'darwin) ;; Check if macOS
+;;   ;; Add SuperCollider to exec-path
+;;   (setq exec-path (append exec-path '("/Applications/SuperCollider.app/Contents/MacOS/")))
 
-  ;; Use w3m package
-  (use-package w3m
-    :straight t)
+;;   ;; Use w3m package
+;;   (use-package w3m
+;;     :straight t)
 
-  ;; Add SuperCollider's scel directory to load path
-  (add-to-list 'load-path "~/Library/Application Support/SuperCollider/downloaded-quarks/scel/el")
+;;   ;; Add SuperCollider's scel directory to load path
+;;   (add-to-list 'load-path "~/Library/Application Support/SuperCollider/downloaded-quarks/scel/el")
 
-  ;; Load sclang
-  (require 'sclang)
+;;   ;; Load sclang
+;;   (require 'sclang)
 
-  ;; Automatically enable sclang-mode for .scd files
-  (add-to-list 'auto-mode-alist '("\\.scd\\'" . sclang-mode))
+;;   ;; Automatically enable sclang-mode for .scd files
+;;   (add-to-list 'auto-mode-alist '("\\.scd\\'" . sclang-mode))
 
-  ;; Optional hook for customization
-  (add-hook 'sclang-mode-hook
-            (lambda ()
-              (turn-on-font-lock))) ;; Enable syntax highlighting
+;;   ;; Optional hook for customization
+;;   (add-hook 'sclang-mode-hook
+;;             (lambda ()
+;;               (turn-on-font-lock))) ;; Enable syntax highlighting
 
-  ;; Prevent the sclang workspace from opening on server boot
-  (setq sclang-show-workspace-on-startup nil))
+;;   ;; Prevent the sclang workspace from opening on server boot
+;;   (setq sclang-show-workspace-on-startup nil))
 
-(when (eq system-type 'gnu/linux) ;; Else (Linux-specific configuration)
-     (message "[supercollider] No support implemented for Linux (yet)"))
+;; (when (eq system-type 'gnu/linux) ;; Else (Linux-specific configuration)
+;;      (message "[supercollider] No support implemented for Linux (yet)"))
 
 #+END_SRC
 

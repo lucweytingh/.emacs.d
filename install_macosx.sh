@@ -39,7 +39,7 @@ if [ ! -d "$SCRIPT_DIR/straight/repos/straight.el" ]; then
     echo "[${RED}*${NC}] straight package manager not installed"
     mkdir -p "$SCRIPT_DIR/straight/repos"
     cd "$SCRIPT_DIR/straight/repos" || exit
-    git clone https://github.com/radian-software/straight.el.git
+    git clone https://github.com/raxod502/straight.el.git
     echo "Repo straight.el has been successfully cloned."
 else
     echo "[${GREEN}*${NC}] straight.el is installed."
