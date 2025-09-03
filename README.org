@@ -2165,6 +2165,71 @@ The user is prompted to choose from the available projects in the demos folder."
 (message "[README] Loading * major modes")
 #+END_SRC
 
+** claude code
+#+BEGIN_SRC emacs-lisp
+(message "[README] Loading ** claude code")
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  ;; for eat terminal backend:
+  (use-package eat
+    :straight (:type git
+                     :host codeberg
+                     :repo "akib/emacs-eat"
+                     :files ("*.el" ("term" "term/*.el") "*.texi"
+                             "*.ti" ("terminfo/e" "terminfo/e/*")
+                             ("terminfo/65" "terminfo/65/*")
+                             ("integration" "integration/*")
+                             (:exclude ".dir-locals.el" "*-tests.el"))))
+
+
+  ;; Install monet for IDE integration with claude-code
+  (use-package monet
+    :straight (:type git :host github :repo "stevemolitor/monet" :branch "main")
+    :config
+    (monet-mode 1))
+
+  ;; Dynamically find claude CLI in common locations and add to PATH
+  (let ((claude-paths '("~/.nvm/versions/node/current/bin/claude"
+                        "~/.nvm/versions/node/*/bin/claude"
+                        "~/.local/bin/claude"
+                        "/usr/local/bin/claude"
+                        "/opt/homebrew/bin/claude")))
+    (dolist (path-pattern claude-paths)
+      (let ((expanded-path (expand-file-name path-pattern)))
+        (if (string-match "\\*" path-pattern)
+            ;; Handle glob patterns (like NVM version wildcards)
+            (dolist (file (file-expand-wildcards expanded-path))
+              (when (file-executable-p file)
+                (let ((bin-dir (file-name-directory file)))
+                  (add-to-list 'exec-path bin-dir)
+                  (setenv "PATH" (concat (getenv "PATH") ":" bin-dir)))))
+          ;; Handle direct paths
+          (when (file-executable-p expanded-path)
+            (let ((bin-dir (file-name-directory expanded-path)))
+              (add-to-list 'exec-path bin-dir)
+              (setenv "PATH" (concat (getenv "PATH") ":" bin-dir)))))))
+
+  ;; install claude-code.el, using :depth 1 to reduce download size:
+  (use-package claude-code
+    :straight (:type git :host github :repo "stevemolitor/claude-code.el" :branch "main" :depth 1
+                     :files ("*.el" (:exclude "images/*")))
+    :bind-keymap
+    ("C-c c" . claude-code-command-map) ;; or your preferred key
+    ;; Optionally define a repeat map so that "M" will cycle thru Claude auto-accept/plan/confirm modes after invoking claude-code-cycle-mode / C-c M.
+    :bind
+    (:repeat-map my-claude-code-map ("M" . claude-code-cycle-mode))
+    :config
+    ;; optional IDE integration with Monet
+    (add-hook 'claude-code-process-environment-functions #'monet-start-server-function)
+    (claude-code-mode))
+
+    (claude-code-mode))
+#+END_SRC
+
+#+RESULTS:
+: t
+
 ** html mode
 #+BEGIN_SRC emacs-lisp
 (message "[README] Loading ** html mode")
@@ -3151,6 +3216,7 @@ math mode already. We need to adapt the =yank-handled-properties= variable
 #+RESULTS:
 | lambda | nil | (turn-on-font-lock)                                                                                            |                                                         |
 | lambda | nil | (if (string= (buffer-name) sclang-post-buffer) (progn (setq mode-line-format '(- sclang-server-info-string)))) | (define-key sclang-mode-map  sclang-server-key-map) |
+
 
 * Log
 #+BEGIN_SRC emacs-lisp
