@@ -50,18 +50,27 @@ new user
 
 ** user specific variables
 #+BEGIN_SRC emacs-lisp
-  ; Main
-  (setq my-fullname "Luc Weytingh")
-  (setq my-email "lucweytingh@pm.me")
+; Main
+(setq my-fullname "Luc Weytingh")
+(setq my-email "lucweytingh@pm.me")
 
-  ; Additional
-  ; SSH configuration
-  (setq ssh-config
-  '(
-    ("server" "/ssh:lucw@49.13.225.4:/home/lucw/" "(set-bash)")
-    ("gc" "/ssh:lucw@94.130.183.250:/home/lucw/" "(set-bash)")
-    ))
+; Additional
+; SSH configuration
+(setq ssh-config
+'(
+  ("server" "/ssh:lucw@49.13.225.4:/home/lucw/" "(set-bash)")
+  ("gc" "/ssh:lucw@94.130.183.250:/home/lucw/" "(set-bash)")
+  ("sitou" "/ssh:lucw@162.55.49.235:/home/lucw/" "(set-bash)")
+  ("potato1" "/ssh:pi@192.168.0.111:/home/pi/" "(set-bash)")
+  ("potato2" "/ssh:pi@192.168.0.121:/home/pi/" "(set-bash)")
+  ("mirrors" "/ssh:pi@192.168.2.121:/home/pi/" "(set-bash)")
+  ))
 #+END_SRC
+
+#+RESULTS:
+| server | /ssh:lucw@49.13.225.4:/home/lucw/    | (set-bash) |
+| gc     | /ssh:lucw@94.130.183.250:/home/lucw/ | (set-bash) |
+| sitou  | /ssh:lucw@162.55.49.235:/home/lucw/  | (set-bash) |
 
 ** startup screen
 Change title notes and banner on startup screen
@@ -1366,7 +1375,7 @@ This is defined in simple.el, and it calls =kill-word=. Let's define a function
 called delete-word, which
 
 #+BEGIN_SRC emacs-lisp
-(defun delete-word (arg)
+(defun forward-delete-word (arg)
   "Delete characters forward until encountering the end of a word.
 With argument ARG, do this that many times."
   (interactive "p")
@@ -1376,7 +1385,7 @@ With argument ARG, do this that many times."
   "Delete characters backward until encountering the beginning of a word.
 With argument ARG, do this that many times."
   (interactive "p")
-  (delete-word (- arg)))
+  (forward-delete-word (- arg)))
 
 (global-set-key (kbd "M-<backspace>") `backward-delete-word)
 #+END_SRC
@@ -1402,16 +1411,16 @@ Taken from https://emacs.stackexchange.com/questions/10786/remove-parentheses-ar
 
 ** unfill paragraph
 #+BEGIN_SRC emacs-lisp
-(defun unfill-paragraph ()
-  (interactive)
-  (let ((fill-column (point-max)))
-    (fill-paragraph nil)))
-(global-set-key "\C-ceu" 'unfill-paragraph)
+  ;; (defun unfill-paragraph ()
+  ;;   (interactive)
+  ;;   (let ((fill-column (point-max)))
+  ;;     (fill-paragraph nil)))
+  ;; (global-set-key "\C-c e u" 'unfill-paragraph)
 
-(defun unfill-region ()
-  (interactive)
-  (let ((fill-column (point-max)))
-    (fill-region (region-beginning) (region-end) nil)))
+  ;; (defun unfill-region ()
+  ;;   (interactive)
+  ;;   (let ((fill-column (point-max)))
+  ;;     (fill-region (region-beginning) (region-end) nil)))
 #+END_SRC
 
 ** scaling
@@ -1539,7 +1548,34 @@ opens it.
 
 #+RESULTS:
 : open-clipboard-path
+** snake_case
+#+BEGIN_SRC elisp
+(use-package string-inflection
+  :straight t
+  :bind (("C-c C-u" . string-inflection-all-cycle))
+  :config
+  ;; Optional: your custom function using major-mode detection
+  (defun my/string-inflection-cycle ()
+    "Cycle naming style based on major mode."
+    (interactive)
+    (cond
+     ((eq major-mode 'emacs-lisp-mode)
+      (string-inflection-all-cycle))
+     ((eq major-mode 'python-mode)
+      (string-inflection-python-style-cycle))
+     ((eq major-mode 'java-mode)
+      (string-inflection-java-style-cycle))
+     ((eq major-mode 'elixir-mode)
+      (string-inflection-elixir-style-cycle))
+     (t
+      (string-inflection-ruby-style-cycle)))))
 
+
+(global-set-key (kbd "C-c s") 'string-inflection-underscore)
+#+END_SRC
+
+#+RESULTS:
+: snake-case-symbol-after-point
 
 * mx operations
 #+BEGIN_SRC emacs-lisp
@@ -1551,6 +1587,11 @@ Emacs's default way to write a file to a different location is
 #'write-file. This function saves the buffer to a new location, but leaves the
 old file where it was. But sometimes we want to move a file, so the old file is
 gone!
+
+#+BEGIN_SRC emacs-lisp
+(message "[README] Loading ** move-file")
+#+END_SRC
+
 #+begin_SRC emacs-lisp
 (defun move-file (new-location)
   "Write this file to NEW-LOCATION, and delete the old one."
@@ -1606,6 +1647,11 @@ gone!
 
 ** touch
 Let's write a function that allows to execute the touch command.
+
+#+BEGIN_SRC emacs-lisp
+(message "[README] Loading ** touch")
+#+END_SRC
+
 #+BEGIN_SRC emacs-lisp
 (defun remove-ssh-prefix (filename)
   "Removes ssh-prefix of filenames taken from remote locations"
@@ -1626,6 +1672,11 @@ Let's write a function that allows to execute the touch command.
 
 ** copying current path to clipboard
 Taken from https://stackoverflow.com/questions/2416655/file-path-to-clipboard-in-emacs
+
+#+BEGIN_SRC emacs-lisp
+(message "[README] Loading ** copying current path to clipboard")
+#+END_SRC
+
 #+BEGIN_SRC emacs-lisp
 (defun cpath ()
   "Copy the current buffer full path to the clipboard."
@@ -1664,6 +1715,11 @@ Taken from https://stackoverflow.com/questions/2416655/file-path-to-clipboard-in
 
 
 ** duplicate region
+
+#+BEGIN_SRC emacs-lisp
+(message "[README] Loading ** duplicate region")
+#+END_SRC
+
 #+BEGIN_SRC emacs-lisp
 (defun duplicate-region ()
   (interactive)
@@ -1734,6 +1790,10 @@ Taken from https://stackoverflow.com/questions/2416655/file-path-to-clipboard-in
 
 ** jupyter insert token
 #+BEGIN_SRC emacs-lisp
+(message "[README] Loading ** jupyter insert token")
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
 (defun jupyter-insert-token ()
   (interactive)
   (let ((output (shell-command-to-string "jupyter notebook list")))
@@ -1743,6 +1803,10 @@ Taken from https://stackoverflow.com/questions/2416655/file-path-to-clipboard-in
 
 
 ** set local directory
+#+BEGIN_SRC emacs-lisp
+(message "[README] Loading ** set local directory")
+#+END_SRC
+
 #+BEGIN_SRC emacs-lisp
 (defun local ()
   (interactive)
@@ -1758,55 +1822,58 @@ Taken from https://stackoverflow.com/questions/2416655/file-path-to-clipboard-in
 
 ** shell from directory
 #+BEGIN_SRC emacs-lisp
+(message "[README] Loading ** shell from directory")
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
 (use-package s
-  :straight t)
+   :straight t)
 
 (defun define-named-lambda (name lambd args)
-  (defalias (intern name) `(lambda () (interactive) (apply ,lambd ',args))))
+   (defalias (intern name) `(lambda () (interactive) (apply ,lambd ',args))))
 
 (defun define-custom-function (name func)
-  (define-named-lambda name (lambda () (funcall func))))
+   (define-named-lambda name (lambda () (funcall func))))
 
 (defun open-shell-in-directory (directory &optional buffername)
-  (interactive)
-  (message "osid")
-  (message directory)
-  (message buffername)
-  (with-temp-buffer
-    (setq default-directory directory)
-    (shell buffername)
-    )
-)
+   (interactive)
+   (message "osid")
+   (message directory)
+   (message buffername)
+   (with-temp-buffer
+     (setq default-directory directory)
+     (shell buffername)
+     )
+ )
 
 (defun my-eval-string (string)
-  (eval (car (read-from-string (format "(progn %s)" string)))))
+   (eval (car (read-from-string (format "(progn %s)" string)))))
 
 (defun set-bash () (interactive) (setq explicit-shell-file-name "/bin/bash"))
+
 (defun set-zsh () (interactive) (setq explicit-shell-file-name "/bin/zsh"))
 
 (dolist (elt ssh-config)
-  ;; (define-named-lambda
-  ;;   (nth 0 elt)
-  ;;   (lambda (directory)
-  ;;     (interactive)
-  ;;     (setq default-directory directory))
-  ;;   '((nth 1 elt))
-  ;;   )
-  (define-named-lambda
-    (s-concat "shell-" (nth 0 elt))
-    (lambda (name directory shell-env)
-      (interactive)
-      (my-eval-string shell-env)
-      (open-shell-in-directory directory (s-concat "*shell-" name "*")))
-    elt
-    )
-)
-
-;; (open-shell-in-directory "/ssh:lucw@snellius.surf.nl:" "*shell-snell*")
-;; TRAMP open in current direcotry
+   ;; (define-named-lambda
+   ;;   (nth 0 elt)
+   ;;   (lambda (directory)
+   ;;     (interactive)
+   ;;     (setq default-directory directory))
+   ;;   '((nth 1 elt))
+   ;;   )
+   (define-named-lambda
+     (s-concat "shell-" (nth 0 elt))
+     (lambda (name directory shell-env)
+       (interactive)
+       (my-eval-string shell-env)
+       (open-shell-in-directory directory (s-concat "*shell-" name "*")))
+     elt
+     )
+ )
+ ;; (open-shell-in-directory "/ssh:lucw@snellius.surf.nl:" "*shell-snell*")
+ ;; TRAMP open in current direcotry
 
 (setq tramp-default-method "ssh")
-
 #+END_SRC
 
 #+RESULTS:
@@ -1814,7 +1881,10 @@ Taken from https://stackoverflow.com/questions/2416655/file-path-to-clipboard-in
 
 ** monumental
 #+BEGIN_SRC emacs-lisp
+(message "[README] Loading ** monumental")
+#+END_SRC
 
+#+BEGIN_SRC emacs-lisp
 (defun yarn-and-yarn-dev ()
   "Open a shell in a side window and run yarn && yarn dev."
   (interactive)
@@ -1842,7 +1912,7 @@ Taken from https://stackoverflow.com/questions/2416655/file-path-to-clipboard-in
   "Open external terminal and run nix pisa petra panama command."
   (interactive)
   (start-process "nix-pisa-petra-panama" nil "osascript" "-e"
-                 "tell application \"Terminal\" to do script \"cd ~/Documents/mech/portico/ && nix run .#start-arcade -- --mock-standalone \\\"Pisa 2\\\" \\\"Petra 3\\\" \\\"Panama 1\\\" --speedup 5\"")))
+               "tell application \"Terminal\" to do script \"cd ~/Documents/mech/portico/ && nix run .#start-arcade -- --mock-standalone \\\"Pisa 2\\\" \\\"Petra 3\\\" \\\"Panama 1\\\" --speedup 5\""))
 #+END_SRC
 
 #+RESULTS:
@@ -1850,6 +1920,10 @@ Taken from https://stackoverflow.com/questions/2416655/file-path-to-clipboard-in
 
 
 ** dwim-shell-command
+#+BEGIN_SRC emacs-lisp
+(message "[README] Loading ** dwim shell command")
+#+END_SRC
+
 #+BEGIN_SRC emacs-lisp
   (defun dwim-shell-commands-pdf-to-txt ()
     "Convert pdf to txt."
@@ -1876,6 +1950,11 @@ Taken from https://stackoverflow.com/questions/2416655/file-path-to-clipboard-in
 : dwim-shell-commands-resize-image
 ** open-specific-files
 #+BEGIN_SRC emacs-lisp
+(message "[README] Loading ** open specific files")
+#+END_SRC
+
+
+#+BEGIN_SRC emacs-lisp
 (defun open-readme ()
    (interactive)
    (find-file "~/.emacs.d/README.org"))
@@ -1894,6 +1973,10 @@ Taken from https://stackoverflow.com/questions/2416655/file-path-to-clipboard-in
 
 ** find pattern in dir
 #+BEGIN_SRC emacs-lisp
+(message "[README] Loading ** find pattern in dir")
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
 (defun find-pattern-in-dir ()
   (interactive)
   (let* ((dir-name (read-directory-name "Directory to look in: "))
@@ -1905,14 +1988,25 @@ Taken from https://stackoverflow.com/questions/2416655/file-path-to-clipboard-in
 
 ** magit (git integration)
 #+BEGIN_SRC emacs-lisp
+(message "[README] Loading ** magit")
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
 (use-package magit
     :straight t
     :bind ("C-x g" . magit-status)
     :diminish magit-minor-mode)
 #+END_SRC
 
+#+RESULTS:
+: magit-status
+
 
 ** recentf
+#+BEGIN_SRC emacs-lisp
+(message "[README] Loading ** recentf")
+#+END_SRC
+
 #+BEGIN_SRC emacs-lisp
   (require 'recentf)
 
@@ -1937,12 +2031,19 @@ Taken from https://stackoverflow.com/questions/2416655/file-path-to-clipboard-in
 
 ** yasnippet (shorthands)
 #+BEGIN_SRC emacs-lisp
+(message "[README] Loading ** yasnippet")
+#+END_SRC
+#+BEGIN_SRC emacs-lisp
 (use-package yasnippet
   :straight t)
 (yas-global-mode 1)
 #+END_SRC
 
 ** sudo remote
+#+BEGIN_SRC emacs-lisp
+(message "[README] Loading ** sudo remote")
+#+END_SRC
+
 #+BEGIN_SRC emacs-lisp
 (use-package crux :straight t)
 
@@ -1956,6 +2057,10 @@ Taken from https://stackoverflow.com/questions/2416655/file-path-to-clipboard-in
 
 ** focus mode
 enables centered editing
+
+#+BEGIN_SRC emacs-lisp
+(message "[README] Loading ** focus mode")
+#+END_SRC
 
 #+BEGIN_SRC emacs-lisp
 (use-package olivetti
@@ -1979,6 +2084,11 @@ enables centered editing
 
 ** NAP
 Includes functions for automating repeated NAP processes
+
+#+BEGIN_SRC emacs-lisp
+(message "[README] Loading ** NAP")
+#+END_SRC
+
 #+BEGIN_SRC emacs-lisp
 ;; create an application
 (setenv "QT_DIR" "~/Qt/6.7.2/gcc_64")
@@ -2722,6 +2832,24 @@ improves this behaviour.
 
 #+RESULTS:
 
+** rust
+#+BEGIN_SRC emacs-lisp
+(use-package rust-mode
+  :straight t
+  :mode "\\.rs\\'"
+  :config
+  ;; Optional: customize rust-mode behavior here
+  )
+
+(use-package flycheck-rust
+  :straight t
+  :after (rust-mode flycheck)
+  :hook (rust-mode . flycheck-rust-setup))
+#+END_SRC
+
+#+RESULTS:
+| flycheck-rust-setup | rust-maybe-initialize-buffer-project |
+
 ** latex
 #+BEGIN_SRC emacs-lisp
 (message "[README] Loading ** latex mode")
@@ -3018,9 +3146,9 @@ math mode already. We need to adapt the =yank-handled-properties= variable
   (company-quickhelp-mode t))
 
 ;; using "standard" as js formatter
-(add-hook 'js-mode-hook
-          (lambda()
-            (js-format-setup "jsb")))
+;; (add-hook 'js-mode-hook
+;;           (lambda()
+;;             (js-format-setup "jsb")))
 
 (global-set-key (kbd "C-x j b") 'js-format-buffer)
 #+END_SRC
@@ -3103,112 +3231,112 @@ math mode already. We need to adapt the =yank-handled-properties= variable
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-(use-package modern-cpp-font-lock
-  :straight t)
+;; (use-package modern-cpp-font-lock
+;;   :straight t)
 
-(defun code-compile ()
-  (interactive)
-  (unless (file-exists-p "Makefile")
-    (set (make-local-variable 'compile-command)
-     (let ((file (file-name-nondirectory buffer-file-name)))
-       (format "%s -o %s %s"
-           (if  (equal (file-name-extension file) "cpp") "g++" "gcc" )
-           (file-name-sans-extension file)
-           file)))
-    (compile compile-command)))
+;; (defun code-compile ()
+;;   (interactive)
+;;   (unless (file-exists-p "Makefile")
+;;     (set (make-local-variable 'compile-command)
+;;      (let ((file (file-name-nondirectory buffer-file-name)))
+;;        (format "%s -o %s %s"
+;;            (if  (equal (file-name-extension file) "cpp") "g++" "gcc" )
+;;            (file-name-sans-extension file)
+;;            file)))
+;;     (compile compile-command)))
 
-(global-set-key [f9] 'code-compile)
-
-
-
-(use-package irony
-  :straight t
-  :config
-  (progn
-    ;; Delay server installation to ensure irony is fully loaded
-    (run-with-idle-timer 2 nil
-      (lambda ()
-        (when (and (fboundp 'irony--find-server-executable)
-                   (fboundp 'irony-install-server))
-          ;; Check if irony server is installed, if not, try to install it automatically
-          (unless (irony--find-server-executable)
-            (message "Irony server not found. Attempting to install...")
-            (condition-case err
-                (irony-install-server)
-              (error
-               (message "Failed to install irony server automatically: %s" err)
-               (message "Please run M-x irony-install-server manually"))))))
-
-    (add-hook 'c++-mode-hook 'irony-mode)
-    (add-hook 'c-mode-hook 'irony-mode)
-
-    ;; Use compilation database first, clang_complete as fallback.
-    (setq-default irony-cdb-compilation-databases '(irony-cdb-libclang
-                                                      irony-cdb-clang-complete))
-
-    (add-hook 'irony-mode-hook 'irony-cdb-autosetup-compile-options)
-  ))
-
-  ;; I use irony with company to get code completion.
-  (use-package company-irony
-    :straight t
-    :after company irony
-    :config
-    (progn
-      (eval-after-load 'company '(add-to-list 'company-backends 'company-irony))))
-
-  ;; I use irony with flycheck to get real-time syntax checking.
-  (use-package flycheck-irony
-    :straight t
-    :after flycheck irony
-    :config
-    (progn
-      (eval-after-load 'flycheck '(add-hook 'flycheck-mode-hook #'flycheck-irony-setup))))
-
-  ;; Eldoc shows argument list of the function you are currently writing in the echo area.
-  (use-package irony-eldoc
-    :straight t
-    :after eldoc irony
-    :config
-    (progn
-      (add-hook 'irony-mode-hook 'irony-eldoc)))
+;; (global-set-key [f9] 'code-compile)
 
 
-(defun my-c++-mode-settings ()
-  (setq truncate-lines nil)
-  (local-set-key (kbd "C-c C-c") 'nap-build-app)
-  )
 
-(add-hook 'c++-mode-hook 'my-c++-mode-settings)
+;; (use-package irony
+;;   :straight t
+;;   :config
+;;   (progn
+;;     ;; Delay server installation to ensure irony is fully loaded
+;;     (run-with-idle-timer 2 nil
+;;       (lambda ()
+;;         (when (and (fboundp 'irony--find-server-executable)
+;;                    (fboundp 'irony-install-server))
+;;           ;; Check if irony server is installed, if not, try to install it automatically
+;;           (unless (irony--find-server-executable)
+;;             (message "Irony server not found. Attempting to install...")
+;;             (condition-case err
+;;                 (irony-install-server)
+;;               (error
+;;                (message "Failed to install irony server automatically: %s" err)
+;;                (message "Please run M-x irony-install-server manually"))))))
+
+;;     (add-hook 'c++-mode-hook 'irony-mode)
+;;     (add-hook 'c-mode-hook 'irony-mode)
+
+;;     ;; Use compilation database first, clang_complete as fallback.
+;;     (setq-default irony-cdb-compilation-databases '(irony-cdb-libclang
+;;                                                       irony-cdb-clang-complete))
+
+;;     (add-hook 'irony-mode-hook 'irony-cdb-autosetup-compile-options)
+;;   ))
+
+;;   ;; I use irony with company to get code completion.
+;;   (use-package company-irony
+;;     :straight t
+;;     :after company irony
+;;     :config
+;;     (progn
+;;       (eval-after-load 'company '(add-to-list 'company-backends 'company-irony))))
+
+;;   ;; I use irony with flycheck to get real-time syntax checking.
+;;   (use-package flycheck-irony
+;;     :straight t
+;;     :after flycheck irony
+;;     :config
+;;     (progn
+;;       (eval-after-load 'flycheck '(add-hook 'flycheck-mode-hook #'flycheck-irony-setup))))
+
+;;   ;; Eldoc shows argument list of the function you are currently writing in the echo area.
+;;   (use-package irony-eldoc
+;;     :straight t
+;;     :after eldoc irony
+;;     :config
+;;     (progn
+;;       (add-hook 'irony-mode-hook 'irony-eldoc)))
 
 
-(defun switch-cpp-h-file ()
-  "Switch between .cpp and .h file with the same base name."
-  (interactive)
-  (let* ((file (buffer-file-name))
-         (base-name (file-name-sans-extension file))
-         (extension (file-name-extension file))
-         (counterpart (cond ((string-equal extension "cpp") (concat base-name ".h"))
-                            ((string-equal extension "h") (concat base-name ".cpp"))
-                            (t nil))))
-    (if (and counterpart (file-exists-p counterpart))
-        (find-file counterpart)
-      (message "No corresponding .cpp or .h file found."))))
+;; (defun my-c++-mode-settings ()
+;;   (setq truncate-lines nil)
+;;   (local-set-key (kbd "C-c C-c") 'nap-build-app)
+;;   )
 
-;; Bind the function to C-c o
-(global-set-key (kbd "C-c o") 'switch-cpp-h-file)
+;; (add-hook 'c++-mode-hook 'my-c++-mode-settings)
 
-;; Helper function to install irony server
-(defun install-irony-server-if-needed ()
-  "Install irony server if it's not already installed."
-  (interactive)
-  (if (irony--find-server-executable)
-      (message "Irony server is already installed.")
-    (message "Installing irony server...")
-    (irony-install-server)))
 
-;; Bind the function to a convenient key
-(global-set-key (kbd "C-c i") 'install-irony-server-if-needed)
+;; (defun switch-cpp-h-file ()
+;;   "Switch between .cpp and .h file with the same base name."
+;;   (interactive)
+;;   (let* ((file (buffer-file-name))
+;;          (base-name (file-name-sans-extension file))
+;;          (extension (file-name-extension file))
+;;          (counterpart (cond ((string-equal extension "cpp") (concat base-name ".h"))
+;;                             ((string-equal extension "h") (concat base-name ".cpp"))
+;;                             (t nil))))
+;;     (if (and counterpart (file-exists-p counterpart))
+;;         (find-file counterpart)
+;;       (message "No corresponding .cpp or .h file found."))))
+
+;; ;; Bind the function to C-c o
+;; (global-set-key (kbd "C-c o") 'switch-cpp-h-file)
+
+;; ;; Helper function to install irony server
+;; (defun install-irony-server-if-needed ()
+;;   "Install irony server if it's not already installed."
+;;   (interactive)
+;;   (if (irony--find-server-executable)
+;;       (message "Irony server is already installed.")
+;;     (message "Installing irony server...")
+;;     (irony-install-server)))
+
+;; ;; Bind the function to a convenient key
+;; (global-set-key (kbd "C-c i") 'install-irony-server-if-needed)
 #+END_SRC
 
 #+RESULTS:
@@ -3221,9 +3349,9 @@ math mode already. We need to adapt the =yank-handled-properties= variable
 
 #+BEGIN_SRC emacs-lisp
 ;; Configure nxml-mode (built-in)
-(use-package nxml-mode
-  :ensure nil  ;; `nxml-mode` is built-in, so no need to install
-  :mode ("\\.xml\\'" "\\.urdf\\'"))
+;; (use-package nxml-mode
+;;   :ensure nil  ;; `nxml-mode` is built-in, so no need to install
+;;   :mode ("\\.xml\\'" "\\.urdf\\'"))
 
 (provide 'init-xml)
 #+END_SRC
