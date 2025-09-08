@@ -416,7 +416,7 @@ in mode-line.
 (use-package diminish
   :straight t
   :config
-  ;; (diminish 'projectile-mode)
+  (diminish 'projectile-mode)
   (diminish 'auto-fill-mode))
 #+END_SRC
 
@@ -773,6 +773,21 @@ TODO: check the added benefit
 #+RESULTS:
 : t
 
+** projectile
+Project management and navigation.
+
+#+BEGIN_SRC emacs-lisp
+(use-package projectile
+  :straight t
+  :demand t
+  :config
+  (projectile-mode +1)
+  :bind-keymap
+  ("C-c p" . projectile-command-map)
+  :bind
+  ("C-x C-f" . projectile-find-file))
+#+END_SRC
+
 ** consult
 TODO: check keybindings
 #+BEGIN_SRC emacs-lisp
@@ -788,8 +803,8 @@ TODO: check keybindings
     (setq consult-narrow-key ">")
 
     ;; configure a function which returns the project root directory
-    ;; (autoload 'projectile-project-root "projectile")
-    ;; (setq consult-project-root-function #'projectile-project-root)
+    (autoload 'projectile-project-root "projectile")
+    (setq consult-project-root-function #'projectile-project-root)
 
     ;; NOTE: check `embark-consult' for previews that can be used with the
     ;; default minibuffer and Embark collections.
@@ -866,9 +881,9 @@ TODO: check keybindings
   :config
   (setq orderless-component-separator " +")
   ;; (setq orderless-matching-styles prot-orderless-default-styles)
-  (setq orderless-style-dispatchers
-        '(prot-orderless-literal-dispatcher
-          prot-orderless-initialism-dispatcher))
+  ;; (setq orderless-style-dispatchers
+  ;;       '(prot-orderless-literal-dispatcher
+  ;;         prot-orderless-initialism-dispatcher))
   ;; SPC should never complete: use it for `orderless' groups.
   :bind (:map minibuffer-local-completion-map
               ("SPC" . nil)))
