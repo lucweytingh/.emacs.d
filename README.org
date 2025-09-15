@@ -64,13 +64,19 @@ new user
   ("potato1" "/ssh:pi@192.168.0.111:/home/pi/" "(set-bash)")
   ("potato2" "/ssh:pi@192.168.0.121:/home/pi/" "(set-bash)")
   ("mirrors" "/ssh:pi@192.168.2.121:/home/pi/" "(set-bash)")
-  ))
+  ("pc" "/ssh:100.108.48.108:/" "(set-bash)")
+ )
+)
 #+END_SRC
 
 #+RESULTS:
-| server | /ssh:lucw@49.13.225.4:/home/lucw/    | (set-bash) |
-| gc     | /ssh:lucw@94.130.183.250:/home/lucw/ | (set-bash) |
-| sitou  | /ssh:lucw@162.55.49.235:/home/lucw/  | (set-bash) |
+| server  | /ssh:lucw@49.13.225.4:/home/lucw/    | (set-bash) |
+| gc      | /ssh:lucw@94.130.183.250:/home/lucw/ | (set-bash) |
+| sitou   | /ssh:lucw@162.55.49.235:/home/lucw/  | (set-bash) |
+| potato1 | /ssh:pi@192.168.0.111:/home/pi/      | (set-bash) |
+| potato2 | /ssh:pi@192.168.0.121:/home/pi/      | (set-bash) |
+| mirrors | /ssh:pi@192.168.2.121:/home/pi/      | (set-bash) |
+| pc      | /ssh:100.108.48.108:/                | (set-bash) |
 
 ** startup screen
 Change title notes and banner on startup screen
@@ -1870,14 +1876,21 @@ Taken from https://stackoverflow.com/questions/2416655/file-path-to-clipboard-in
      elt
      )
  )
+
+(use-package helm-tramp
+  :straight t
+  :bind(("C-c s" . helm-tramp))
+  :init(setq tramp-default-method "ssh")
+  )
  ;; (open-shell-in-directory "/ssh:lucw@snellius.surf.nl:" "*shell-snell*")
  ;; TRAMP open in current direcotry
-
-(setq tramp-default-method "ssh")
+;; (setq tramp-default-method "ssh"
+;;       tramp-use-ssh-controlmaster-options nil
+;;       tramp-verbose 1)
 #+END_SRC
 
 #+RESULTS:
-: ssh
+: helm-tramp
 
 ** monumental
 #+BEGIN_SRC emacs-lisp
