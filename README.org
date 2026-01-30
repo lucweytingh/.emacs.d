@@ -2378,7 +2378,7 @@ The user is prompted to choose from the available projects in the demos folder."
     :config
     (claude-code-ide-emacs-tools-setup)
     ;; (setq claude-code-ide-cli-path "~/.local/bin/claude")
-    (setq claude-code-ide-terminal-backend 'eat)
+    (setq claude-code-ide-terminal-backend 'eat))
 
 
     (defun my/claude-code-insert-and-switch ()
