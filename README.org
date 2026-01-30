@@ -2346,11 +2346,6 @@ The user is prompted to choose from the available projects in the demos folder."
 
 #+BEGIN_SRC emacs-lisp
 ;; Install monet for IDE integration with claude-code
-(use-package monet
-  :straight (:type git :host github :repo "stevemolitor/monet" :branch "main")
-  :config
-  (monet-mode 1))
-
 (use-package eat
   :straight (:type git
                    :host codeberg
@@ -2361,46 +2356,19 @@ The user is prompted to choose from the available projects in the demos folder."
                            ("integration" "integration/*")
                            (:exclude ".dir-locals.el" "*-tests.el"))))
 
-;; Dynamically find claude CLI in common locations and add to PATH
-(let ((claude-paths '("~/.nvm/versions/node/current/bin/claude"
-                      "~/.nvm/versions/node/*/bin/claude"
-                      "~/.local/bin/claude"
-                      "/usr/local/bin/claude"
-                      "/opt/homebrew/bin/claude")))
-  (dolist (path-pattern claude-paths)
-    (let ((expanded-path (expand-file-name path-pattern)))
-      (if (string-match "\\*" path-pattern)
-          ;; Handle glob patterns (like NVM version wildcards)
-          (dolist (file (file-expand-wildcards expanded-path))
-            (when (file-executable-p file)
-              (let ((bin-dir (file-name-directory file)))
-                (add-to-list 'exec-path bin-dir)
-                (setenv "PATH" (concat (getenv "PATH") ":" bin-dir)))))
-        ;; Handle direct paths
-        (when (file-executable-p expanded-path)
-          (let ((bin-dir (file-name-directory expanded-path)))
-            (add-to-list 'exec-path bin-dir)
-            (setenv "PATH" (concat (getenv "PATH") ":" bin-dir)))))))
-
-;; install claude-code.el, using :depth 1 to reduce download size:
-(use-package claude-code
-  :straight (:type git :host github :repo "stevemolitor/claude-code.el" :branch "main" :depth 1
-                   :files ("*.el" (:exclude "images/*")))
-  :bind-keymap
-  ("C-c c" . claude-code-command-map) ;; or your preferred key
-  ;; Optionally define a repeat map so that "M" will cycle thru Claude auto-accept/plan/confirm modes after invoking claude-code-cycle-mode / C-c M.
-  :bind
-  (:repeat-map my-claude-code-map ("M" . claude-code-cycle-mode))
+;; ;; install claude-code.el, using :depth 1 to reduce download size:
+;; )
+(use-package claude-code-ide
+  :straight (:type git :host github :repo "manzaltu/claude-code-ide.el")
+  :bind ("C-c C-'" . claude-code-ide-menu) ; Set your favorite keybinding
   :config
-  ;; optional IDE integration with Monet
-  (add-hook 'claude-code-process-environment-functions #'monet-start-server-function)
-  (claude-code-mode))
-
-  (claude-code-mode))
+  (claude-code-ide-emacs-tools-setup)
+  ;; (setq claude-code-ide-cli-path "~/.local/bin/claude")
+  (setq claude-code-ide-terminal-backend 'eat))
 #+END_SRC
 
 #+RESULTS:
-: t
+: claude-code-ide-menu
 
 ** html mode
 #+BEGIN_SRC emacs-lisp
@@ -3252,6 +3220,8 @@ math mode already. We need to adapt the =yank-handled-properties= variable
 
 #+RESULTS:
 : t
+
+
 
 ** c++
 #+BEGIN_SRC emacs-lisp

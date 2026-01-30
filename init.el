@@ -79,6 +79,12 @@
         (write-region (point-min) (point-max) output-file)
         (message "Exported Org file to %s" output-file)))))
 
+(use-package exec-path-from-shell
+  :straight t)
+
+(when (memq window-system '(mac ns x))
+  (exec-path-from-shell-initialize))
+
 (message "[init.el] Checking README.el status...")
 ;; Check if README.el exists, if not, generate it from README.org
 (let ((readme-org (concat user-emacs-directory "README.org"))
