@@ -1146,6 +1146,7 @@ ace-window config
 (global-set-key (kbd "M-o") 'ace-window)
 (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l))
 (setq aw-dispatch-always t)
+  ;; (setq aw-dispatch-always t)
 
 #+END_SRC
 
@@ -2345,30 +2346,60 @@ The user is prompted to choose from the available projects in the demos folder."
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-;; Install monet for IDE integration with claude-code
-(use-package eat
-  :straight (:type git
-                   :host codeberg
-                   :repo "akib/emacs-eat"
-                   :files ("*.el" ("term" "term/*.el") "*.texi"
-                           "*.ti" ("terminfo/e" "terminfo/e/*")
-                           ("terminfo/65" "terminfo/65/*")
-                           ("integration" "integration/*")
-                           (:exclude ".dir-locals.el" "*-tests.el"))))
+  ;; Install monet for IDE integration with claude-code
+  (use-package eat
+    :straight (:type git
+                     :host codeberg
+                     :repo "akib/emacs-eat"
+                     :files ("*.el" ("term" "term/*.el") "*.texi"
+                             "*.ti" ("terminfo/e" "terminfo/e/*")
+                             ("terminfo/65" "terminfo/65/*")
+                             ("integration" "integration/*")
+                             (:exclude ".dir-locals.el" "*-tests.el")))
+    :config
+    ;; Prevent M-o from being sent to the terminal, let Emacs handle it
+    (define-key eat-semi-char-mode-map (kbd "M-o") 'ace-window)
+    (define-key eat-semi-char-mode-map (kbd "M-x") 'counsel-M-x)
+    (define-key eat-semi-char-mode-map (kbd "C-x k") 'kill-buffer)
+    (define-key eat-semi-char-mode-map (kbd "C-g") 'claude-code-ide-send-escape)
+    (setq eat-default-cursor-type '(bar . 2))
 
-;; ;; install claude-code.el, using :depth 1 to reduce download size:
-;; )
-(use-package claude-code-ide
-  :straight (:type git :host github :repo "manzaltu/claude-code-ide.el")
-  :bind ("C-c C-'" . claude-code-ide-menu) ; Set your favorite keybinding
-  :config
-  (claude-code-ide-emacs-tools-setup)
-  ;; (setq claude-code-ide-cli-path "~/.local/bin/claude")
-  (setq claude-code-ide-terminal-backend 'eat))
+    ))
+
+  ;; ;; install claude-code.el, using :depth 1 to reduce download size:
+  ;; )
+  (use-package claude-code-ide
+    :straight (:type git :host github :repo "manzaltu/claude-code-ide.el")
+    :bind ("C-c C-'" . claude-code-ide-menu) ; Set your favorite keybinding
+    :config
+    (claude-code-ide-emacs-tools-setup)
+    ;; (setq claude-code-ide-cli-path "~/.local/bin/claude")
+    (setq claude-code-ide-terminal-backend 'eat)
+
+
+    (defun my/claude-code-insert-and-switch ()
+      "Insert at-mentioned and switch to claude-code-ide buffer.
+  If claude-code-ide is not running, start it first."
+      (interactive)
+      (if (get-buffer (claude-code-ide--get-buffer-name))
+          (progn
+            (claude-code-ide-insert-at-mentioned)
+            (claude-code-ide-switch-to-buffer))
+        (let ((source-buffer (current-buffer)))
+          (claude-code-ide)
+          ;; Use run-at-time to defer until eat finishes initial setup
+          (run-at-time 0.5 nil
+                       (lambda (buf)
+                         (when (buffer-live-p buf)
+                           (with-current-buffer buf
+                             (claude-code-ide-insert-at-mentioned))
+                           (claude-code-ide-switch-to-buffer)))
+                       source-buffer))))
+    (global-set-key (kbd "M-i") 'my/claude-code-insert-and-switch)
 #+END_SRC
 
 #+RESULTS:
-: claude-code-ide-menu
+: t
 
 ** html mode
 #+BEGIN_SRC emacs-lisp
