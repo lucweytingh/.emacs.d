@@ -758,22 +758,26 @@ TODO: check the added benefit
 
 ** ivy (completion mechanism)
 #+BEGIN_SRC emacs-lisp
-  (use-package ivy
-    :straight t
-    :config
-    (ivy-mode 1)
-    (setq ivy-use-virtual-buffers t
-          ivy-count-format "%d/%d "
-          ivy-wrap t
-          ivy-magic-tilde nil
-    ))
+(use-package ivy
+  :straight t
+  :config
+  (ivy-mode 1)
+  (setq ivy-use-virtual-buffers t
+        ivy-count-format "%d/%d "
+        ivy-wrap t
+        ivy-magic-tilde nil
+  ))
 
-  (use-package counsel
-    :after ivy
-    :straight t
-    :config
-    (counsel-mode 1)
-    (global-set-key (kbd "M-x") 'counsel-M-x))
+(use-package counsel
+  :after ivy
+  :straight t
+  :config
+  (counsel-mode 1)
+  (global-set-key (kbd "M-x") 'counsel-M-x)
+  (global-set-key (kbd "C-c C-f") 'counsel-find-file)
+  (with-eval-after-load 'org
+  (define-key org-mode-map (kbd "C-c C-f") #'counsel-find-file))
+  )
 #+END_SRC
 
 #+RESULTS:
