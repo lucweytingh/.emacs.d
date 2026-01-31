@@ -2368,7 +2368,7 @@ The user is prompted to choose from the available projects in the demos folder."
     (define-key eat-semi-char-mode-map (kbd "C-g") 'claude-code-ide-send-escape)
     (setq eat-default-cursor-type '(bar . 2))
 
-    ))
+    )
 
   ;; ;; install claude-code.el, using :depth 1 to reduce download size:
   ;; )
