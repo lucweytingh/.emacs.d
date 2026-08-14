@@ -3482,6 +3482,37 @@ math mode already. We need to adapt the =yank-handled-properties= variable
 | lambda | nil | (if (string= (buffer-name) sclang-post-buffer) (progn (setq mode-line-format '(- sclang-server-info-string)))) | (define-key sclang-mode-map  sclang-server-key-map) |
 
 
+* workspace utils
+Per-project development tooling ported from [[https://github.com/fayalalebrun/.emacs.d][fayalalebrun's config]].
+A "workspace" == the current Projectile project. Provides:
+- tag-scoped [[https://github.com/rejeep/prodigy.el][prodigy]] services per project (idempotent setup/teardown),
+- one dedicated IPython REPL per notebook (=code-cells=),
+- a command hydra on =C-c W= (=C-c m= is taken by =avy-move-line= here),
+- monorepo commands (proto, pyright, mock robots, arduino, format, ...).
+
+The source lives in [[file:lisp/workspace-utils.el][lisp/workspace-utils.el]]. Note: the monorepo commands
+assume Francisco's project layout (=portico/=, =arcade/=, =vision/=, =ctrl/only/=)
+and =nix=; the reusable pieces (prodigy services, notebook REPLs, hydra) work
+anywhere. yarn was replaced by =pnpm=. Machine-specific paths are now defcustoms
+(=workspace-grpcwebproxy-path=, =workspace-atrium-directory=,
+=workspace-ipython-extra-path=).
+
+** dependencies
+=projectile= and =eat= are configured earlier; these are the extra ones.
+#+BEGIN_SRC emacs-lisp
+(use-package prodigy :straight t)
+(use-package hydra :straight t)
+(use-package code-cells :straight t :defer t)
+#+END_SRC
+
+** load
+=workspace-utils= requires =prodigy= and =hydra= at load time, so this block
+must come after the package block above.
+#+BEGIN_SRC emacs-lisp
+(add-to-list 'load-path (expand-file-name "lisp" user-emacs-directory))
+(require 'workspace-utils)
+#+END_SRC
+
 * Log
 #+BEGIN_SRC emacs-lisp
 (message "[README] finished Initialization")

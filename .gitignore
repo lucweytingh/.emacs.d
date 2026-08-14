@@ -29,6 +29,10 @@
 !snippets/
 !snippets/**/*
 
+# Custom lisp
+!lisp/
+!lisp/**/*
+
 # Prot-files
 !repos/**/*
 /repos/scel/
