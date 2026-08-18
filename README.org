@@ -1948,6 +1948,34 @@ Taken from https://stackoverflow.com/questions/2416655/file-path-to-clipboard-in
                "tell application \"Terminal\" to do script \"cd ~/Documents/mech/portico/ && nix run .#start-arcade -- --mock-standalone \\\"Pisa 2\\\" \\\"Petra 3\\\" \\\"Panama 1\\\" --speedup 5\""))
 #+END_SRC
 
+** herdr
+Runtime for coding agents (https://herdr.dev). Run it in a built-in
+=ansi-term= buffer (already starts in char mode, so herdr's own C-x/C-s
+Emacs-layer chords pass straight through). Reuses a live session.
+
+The Emacs keyboard layer (=[emacs] enabled= in ~/.config/herdr/config.toml)
+is a fork-only feature, absent from the official herdr.dev binary. So prefer
+=our-herdr= (the built fork) and fall back to stock =herdr=.
+
+The server lets herdr's =C-M-o= ("open target at point") open files and URLs
+in *this* Emacs via =emacsclient=, instead of herdr spawning its own daemon.
+#+BEGIN_SRC emacs-lisp
+(require 'server)
+(unless (server-running-p) (server-start))
+
+(defun herdr ()
+  "Open herdr in an ansi-term buffer, reusing a live session.
+Prefers the `our-herdr' fork build (Emacs layer) over stock `herdr'."
+  (interactive)
+  (let ((buf (get-buffer "*herdr*")))
+    (if (and buf (get-buffer-process buf))
+        (pop-to-buffer buf)
+      (ansi-term (or (executable-find "our-herdr")
+                     (executable-find "herdr")
+                     "herdr")
+                 "herdr"))))
+#+END_SRC
+
 #+RESULTS:
 : nix-pisa-petra-panama
 
