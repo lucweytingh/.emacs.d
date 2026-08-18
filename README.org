@@ -158,6 +158,9 @@ C-c C-m    avy-move-region
 (setq-default inhibit-startup-screen t
               inhibit-splash-screen t
               initial-scratch-message "")
+;; Keep native-compilation warnings out of the *Warnings* popup (still logged
+;; to *Async-native-compile-log*). Use nil to mute fully.
+(setq native-comp-async-report-warnings-errors 'silent)
 #+END_SRC
 
 ** startup screen
