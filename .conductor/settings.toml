@@ -1,0 +1,6 @@
+"$schema" = "https://conductor.build/schemas/settings.repo.schema.json"
+
+[scripts]
+# Symlink straight/ and eln-cache/ to the canonical ~/.emacs.d so a fresh
+# workspace reuses downloaded packages instead of refetching them.
+setup = "bash .conductor/link-emacs-packages.sh"

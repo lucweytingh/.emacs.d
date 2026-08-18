@@ -17,6 +17,10 @@
 !README.org
 !init.el
 
+# Conductor workspace setup (symlink packages instead of redownloading)
+!.conductor/settings.toml
+!.conductor/link-emacs-packages.sh
+
 # Dashboard img
 !spree.png
 
