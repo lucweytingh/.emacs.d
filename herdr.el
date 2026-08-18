@@ -1,22 +1,28 @@
-;;; herdr.el --- Native Emacs interface to the herdr agent runtime -*- lexical-binding: t; -*-
+;;; herdr.el --- Native Emacs overview for the herdr agent runtime -*- lexical-binding: t; -*-
 
-;; Drives a running herdr server through its CLI/socket API instead of
-;; embedding herdr's TUI in a terminal (which renders poorly).  Gives a
-;; tabulated dashboard of panes/agents plus read/send/attach/focus actions.
+;; herdr (https://herdr.dev) is a persistent terminal multiplexer for coding
+;; agents: each agent (e.g. Claude) runs as a CLI process in a herdr "pane"
+;; (a PTY) on a background server, which tracks status and exposes a socket API.
 ;;
-;; Requires the `our-herdr' (or `herdr') binary on PATH and a running herdr
-;; session.  Start one with `M-x herdr-status' once herdr is running.
+;; This gives a tabulated overview of the running agents and lets you attach to
+;; one full-screen in an `eat' buffer -- the real, interactive terminal, not a
+;; polling reimplementation.  `herdr agent attach' scopes to a single pane, so
+;; it renders cleanly (unlike embedding the whole multiplexer TUI).
+;;
+;; Requires `our-herdr' (or `herdr') on PATH and a running herdr session.
+;; `M-x herdr-status' opens the overview.
 
 ;;; Code:
 
 (require 'tabulated-list)
-(require 'ansi-color)
 (require 'json)
 (require 'subr-x)
 (require 'term)
 
+(declare-function eat-make "eat")
+
 (defgroup herdr nil
-  "Native interface to the herdr agent runtime."
+  "Native overview for the herdr agent runtime."
   :group 'tools)
 
 (defcustom herdr-executable (or (executable-find "our-herdr") "herdr")
@@ -24,18 +30,14 @@
   :type 'string :group 'herdr)
 
 (defcustom herdr-auto-refresh-seconds 2
-  "Seconds between auto-refreshes of herdr buffers, or nil to disable."
+  "Seconds between overview auto-refreshes, or nil to disable."
   :type '(choice (const :tag "Off" nil) number) :group 'herdr)
 
-(defcustom herdr-output-lines 300
-  "Number of scrollback lines to fetch when viewing pane output."
-  :type 'integer :group 'herdr)
-
-;;;; Core API
+;;;; Socket API
 
 (defun herdr--call (&rest args)
-  "Run the herdr CLI with ARGS, returning the parsed `result' object.
-Signal a `user-error' on a CLI-level {\"error\":...} reply or non-zero exit."
+  "Run the herdr CLI with ARGS; return the parsed `result' object.
+Signal a `user-error' on a CLI {\"error\":...} reply or non-zero exit."
   (with-temp-buffer
     (let ((status (apply #'call-process herdr-executable nil t nil args)))
       (goto-char (point-min))
@@ -52,36 +54,76 @@ Signal a `user-error' on a CLI-level {\"error\":...} reply or non-zero exit."
           (user-error "herdr exited with status %s" status))
         (alist-get 'result obj)))))
 
-(defun herdr--snapshot ()
-  "Return the current session snapshot as an alist."
-  (alist-get 'snapshot (herdr--call "api" "snapshot")))
-
-(defun herdr--panes ()
-  "Return pane alists from the snapshot, each with a `ws_label' added."
-  (let* ((snap (herdr--snapshot))
+(defun herdr--rows ()
+  "Return one plist per pane from the snapshot, agents merged in.
+Keys: :target :ws :name :kind :status :cwd."
+  (let* ((snap (alist-get 'snapshot (herdr--call "api" "snapshot")))
          (labels (mapcar (lambda (w)
                            (cons (alist-get 'workspace_id w) (alist-get 'label w)))
-                         (alist-get 'workspaces snap))))
-    (mapcar (lambda (p)
-              (cons (cons 'ws_label
-                          (alist-get (alist-get 'workspace_id p) labels
-                                     nil nil #'equal))
-                    p))
-            (alist-get 'panes snap))))
+                         (alist-get 'workspaces snap)))
+         (agents (make-hash-table :test 'equal)))
+    (dolist (a (alist-get 'agents snap))
+      (puthash (alist-get 'pane_id a) a agents))
+    (mapcar
+     (lambda (p)
+       (let* ((pid (alist-get 'pane_id p))
+              (a (gethash pid agents)))
+         (list :target pid
+               :ws (or (alist-get (alist-get 'workspace_id p) labels nil nil #'equal) "")
+               :name (or (and a (alist-get 'name a)) "")
+               :kind (or (and a (alist-get 'agent a)) "shell")
+               :status (or (alist-get 'agent_status p) "unknown")
+               :cwd (or (alist-get 'foreground_cwd p) (alist-get 'cwd p) ""))))
+     (alist-get 'panes snap))))
 
 (defun herdr--status-face (status)
   "Face for agent STATUS string."
   (pcase status
     ("working" 'success)
     ("blocked" 'warning)
+    ("idle" 'font-lock-keyword-face)
     (_ 'shadow)))
 
-;;;; Dashboard
+;;;; Overview
 
 (defvar-local herdr--timer nil "Buffer-local auto-refresh timer.")
 
-(defun herdr--install-timer (refresh-fn)
-  "Auto-run REFRESH-FN in the current buffer per `herdr-auto-refresh-seconds'."
+(defvar-keymap herdr-list-mode-map
+  :doc "Keymap for `herdr-list-mode'."
+  "RET" #'herdr-attach
+  "g"   #'herdr-refresh
+  "s"   #'herdr-send
+  "f"   #'herdr-focus
+  "+"   #'herdr-start-agent)
+
+(define-derived-mode herdr-list-mode tabulated-list-mode "Herdr"
+  "Overview of herdr panes/agents.  RET attaches to the agent at point."
+  (setq tabulated-list-format
+        [("Agent" 16 t) ("Kind" 8 t) ("Status" 9 t) ("Directory" 48 t)]
+        tabulated-list-padding 1
+        tabulated-list-entries #'herdr--list-entries)
+  (tabulated-list-init-header))
+
+(defun herdr--list-entries ()
+  "Build `tabulated-list' entries from `herdr--rows'."
+  (mapcar
+   (lambda (r)
+     (let ((status (plist-get r :status)))
+       (list (plist-get r :target)
+             (vector (let ((n (plist-get r :name)))
+                       (if (string-empty-p n) (plist-get r :target) n))
+                     (plist-get r :kind)
+                     (propertize status 'face (herdr--status-face status))
+                     (abbreviate-file-name (plist-get r :cwd))))))
+   (herdr--rows)))
+
+(defun herdr-refresh ()
+  "Refresh the overview."
+  (interactive)
+  (tabulated-list-print t))
+
+(defun herdr--install-timer ()
+  "Auto-refresh this overview buffer per `herdr-auto-refresh-seconds'."
   (when (and herdr-auto-refresh-seconds (not herdr--timer))
     (let ((buf (current-buffer)))
       (setq herdr--timer
@@ -89,65 +131,43 @@ Signal a `user-error' on a CLI-level {\"error\":...} reply or non-zero exit."
              herdr-auto-refresh-seconds herdr-auto-refresh-seconds
              (lambda ()
                (if (buffer-live-p buf)
-                   (with-current-buffer buf (ignore-errors (funcall refresh-fn)))
+                   (with-current-buffer buf (ignore-errors (herdr-refresh)))
                  (ignore-errors (cancel-timer herdr--timer))))))
       (add-hook 'kill-buffer-hook
                 (lambda () (when herdr--timer (cancel-timer herdr--timer)))
                 nil t))))
 
-(defvar-keymap herdr-list-mode-map
-  :doc "Keymap for `herdr-list-mode'."
-  "g"   #'herdr-refresh
-  "RET" #'herdr-view-output
-  "s"   #'herdr-send
-  "f"   #'herdr-focus
-  "a"   #'herdr-attach
-  "+"   #'herdr-start-agent)
-
-(define-derived-mode herdr-list-mode tabulated-list-mode "Herdr"
-  "Major mode for the herdr pane/agent dashboard."
-  (setq tabulated-list-format
-        [("WS" 10 t) ("Pane" 8 t) ("Status" 9 t) ("Directory" 50 t)]
-        tabulated-list-padding 1
-        tabulated-list-entries #'herdr--list-entries)
-  (tabulated-list-init-header))
-
-(defun herdr--list-entries ()
-  "Build `tabulated-list' entries from the current panes."
-  (mapcar
-   (lambda (p)
-     (let ((status (or (alist-get 'agent_status p) "unknown")))
-       (list (alist-get 'pane_id p)
-             (vector (or (alist-get 'ws_label p) "")
-                     (or (alist-get 'pane_id p) "")
-                     (propertize status 'face (herdr--status-face status))
-                     (abbreviate-file-name
-                      (or (alist-get 'foreground_cwd p) (alist-get 'cwd p) ""))))))
-   (herdr--panes)))
-
-(defun herdr-refresh ()
-  "Refresh the herdr dashboard."
-  (interactive)
-  (tabulated-list-print t))
-
 ;;;###autoload
 (defun herdr-status ()
-  "Open the herdr dashboard listing panes and agent status."
+  "Open the herdr overview: agents, status, and directories."
   (interactive)
   (with-current-buffer (get-buffer-create "*herdr*")
     (herdr-list-mode)
     (herdr-refresh)
-    (herdr--install-timer #'herdr-refresh)
+    (herdr--install-timer)
     (pop-to-buffer (current-buffer))))
 
-;;;; Per-pane actions
+;;;; Actions
 
 (defun herdr--target ()
-  "The pane id on the current dashboard line."
-  (or (tabulated-list-get-id) (user-error "No herdr pane on this line")))
+  "Pane id (agent target) on the current overview line."
+  (or (tabulated-list-get-id) (user-error "No herdr agent on this line")))
+
+(defun herdr-attach (target)
+  "Attach to herdr TARGET full-screen in a terminal buffer.
+Uses `eat' when available, else `term'.  Detach with the herdr detach key
+\(C-b q by default); the pane keeps running on the server."
+  (interactive (list (herdr--target)))
+  (let ((name (format "herdr:%s" target))
+        (args (list "agent" "attach" "--takeover" target)))
+    (pop-to-buffer
+     (if (require 'eat nil t)
+         (apply #'eat-make name herdr-executable nil args)
+       (let ((buf (apply #'make-term name herdr-executable nil args)))
+         (with-current-buffer buf (term-mode) (term-char-mode) buf))))))
 
 (defun herdr-send (target text)
-  "Send TEXT to herdr TARGET (literal input, no trailing newline appended)."
+  "Send literal TEXT to herdr TARGET without attaching."
   (interactive (let ((tgt (herdr--target)))
                  (list tgt (read-string (format "Send to %s: " tgt)))))
   (herdr--call "agent" "send" target text)
@@ -167,45 +187,6 @@ Signal a `user-error' on a CLI-level {\"error\":...} reply or non-zero exit."
          (split-string-and-unquote command))
   (when (derived-mode-p 'herdr-list-mode) (herdr-refresh))
   (message "herdr: started %s" name))
-
-(defun herdr-attach (target)
-  "Attach to herdr TARGET in a dedicated `term' buffer.
-A single pane renders fine in `term'; only the full multiplexer TUI does not."
-  (interactive (list (herdr--target)))
-  (let ((buf (make-term (format "herdr-attach:%s" target)
-                        herdr-executable nil "agent" "attach" target)))
-    (with-current-buffer buf (term-mode) (term-char-mode))
-    (switch-to-buffer buf)))
-
-;;;; Pane output viewer
-
-(defvar-local herdr--output-target nil "Pane id shown in this output buffer.")
-
-(define-derived-mode herdr-output-mode special-mode "Herdr-Out"
-  "View a herdr pane's recent output, refreshed in place.")
-
-(defun herdr--output-refresh ()
-  "Re-read the target pane's output into the current buffer."
-  (let* ((res (herdr--call "agent" "read" herdr--output-target
-                           "--lines" (number-to-string herdr-output-lines)
-                           "--format" "ansi"))
-         (text (alist-get 'text (alist-get 'read res)))
-         (at-end (>= (point) (point-max)))
-         (inhibit-read-only t))
-    (erase-buffer)
-    (insert (ansi-color-apply (or text "")))
-    (when at-end (goto-char (point-max)))))
-
-(defun herdr-view-output ()
-  "Open a live-refreshing view of the pane output at point."
-  (interactive)
-  (let ((target (herdr--target)))
-    (with-current-buffer (get-buffer-create (format "*herdr:%s*" target))
-      (herdr-output-mode)
-      (setq herdr--output-target target)
-      (herdr--output-refresh)
-      (herdr--install-timer #'herdr--output-refresh)
-      (pop-to-buffer (current-buffer)))))
 
 (provide 'herdr)
 ;;; herdr.el ends here
