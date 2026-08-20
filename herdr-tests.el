@@ -113,5 +113,34 @@ as unknown-option).  Skipped when no herdr server is reachable."
       (should (string-match-p "not found" (cadr err)))
       (should-not (string-match-p "unknown option" (cadr err))))))
 
+(ert-deftest herdr-tui-requires-eat ()
+  "Without eat available, `herdr-tui' fails with a readable error."
+  (cl-letf (((symbol-function 'require) (lambda (&rest _) nil)))
+    (should-error (herdr-tui) :type 'user-error)))
+
+(ert-deftest herdr-tui-live-char-mode-passes-emacs-chords ()
+  "The TUI buffer is in char mode so C-x/C-s reach herdr's Emacs layer.
+Skipped without eat or a reachable herdr server."
+  (let ((eat-dir (expand-file-name "~/.emacs.d/straight/build/eat")))
+    (when (file-directory-p eat-dir) (add-to-list 'load-path eat-dir)))
+  (let ((herdr-executable (or (executable-find "our-herdr")
+                              (executable-find "herdr"))))
+    (skip-unless (and herdr-executable
+                      (require 'eat nil t)
+                      (ignore-errors (herdr--call "api" "snapshot"))))
+    (save-window-excursion
+      (herdr-tui)
+      (unwind-protect
+          (with-current-buffer "*herdr-tui*"
+            (sleep-for 2)
+            (should (bound-and-true-p eat--char-mode))
+            (should (eq (key-binding (kbd "C-x")) 'eat-self-input))
+            (should (eq (key-binding (kbd "C-s")) 'eat-self-input))
+            (should (eq (key-binding (kbd "C-M-m")) 'eat-semi-char-mode))
+            (should (get-buffer-process (current-buffer))))
+        (let ((proc (get-buffer-process "*herdr-tui*")))
+          (when proc (delete-process proc)))
+        (kill-buffer "*herdr-tui*")))))
+
 (provide 'herdr-tests)
 ;;; herdr-tests.el ends here

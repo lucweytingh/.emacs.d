@@ -1956,20 +1956,25 @@ Taken from https://stackoverflow.com/questions/2416655/file-path-to-clipboard-in
 
 
 ** herdr
-Native dashboard for the [[https://herdr.dev][herdr]] agent runtime. Drives a
-running herdr server through its socket API (=our-herdr api/agent ...=) instead
-of embedding herdr's TUI in a terminal, which renders poorly. Code lives in
-=herdr.el=; loaded lazily so it costs nothing until =C-c H=.
+Native overview for the [[https://herdr.dev][herdr]] agent runtime, driving a
+running herdr server through its socket API (=our-herdr api/agent ...=).
+Code lives in =herdr.el=; loaded lazily so it costs nothing until =C-c H=.
 
-=M-x herdr-status= opens a live list of panes/agents (workspace, status, cwd).
-On a row: =RET= view output, =s= send text, =f= focus, =a= attach in a term,
-=+= start an agent, =g= refresh.
+=C-c H= opens a live table of agents (name, kind, status, cwd). On a row:
+=RET= attach to that agent full-screen in eat, =s= send text, =f= focus,
+=+= start an agent, =t= full multiplexer TUI, =g= refresh.
+
+=M-x herdr-tui= (or =t=) opens the whole herdr TUI in eat char mode: the
+fork's =[emacs] enabled= layer means herdr itself speaks Emacs — =C-x=
+chords for tabs/splits, =C-s= isearch, =C-y/M-y= kill ring, =C-x [= TEXT
+mode. =M-RET= hands the keyboard back to Emacs.
 #+BEGIN_SRC emacs-lisp
 (require 'server)
 (unless (server-running-p) (server-start))
 
 (add-to-list 'load-path (directory-file-name user-emacs-directory))
 (autoload 'herdr-status "herdr" "Open the herdr agent dashboard." t)
+(autoload 'herdr-tui "herdr" "Open the herdr TUI in eat char mode." t)
 (global-set-key (kbd "C-c H") #'herdr-status)
 #+END_SRC
 

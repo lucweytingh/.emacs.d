@@ -20,6 +20,7 @@
 (require 'term)
 
 (declare-function eat-make "eat")
+(declare-function eat-char-mode "eat")
 
 (defgroup herdr nil
   "Native overview for the herdr agent runtime."
@@ -94,6 +95,7 @@ Keys: :target :ws :name :kind :status :cwd."
   "g"   #'herdr-refresh
   "s"   #'herdr-send
   "f"   #'herdr-focus
+  "t"   #'herdr-tui
   "+"   #'herdr-start-agent)
 
 (define-derived-mode herdr-list-mode tabulated-list-mode "Herdr"
@@ -178,6 +180,23 @@ Uses `eat' when available, else `term'.  Detach with the herdr detach key
   (interactive (list (herdr--target)))
   (herdr--call "agent" "focus" target)
   (message "herdr: focused %s" target))
+
+;;;###autoload
+(defun herdr-tui ()
+  "Open the full herdr multiplexer TUI in an `eat' buffer, char mode.
+The fork's `[emacs] enabled' layer means herdr itself interprets Emacs
+chords (C-x splits/tabs, C-s isearch, C-y/M-y kill ring, C-x [ TEXT mode);
+char mode passes the whole keyboard through so they reach herdr.
+Press M-RET (`eat-semi-char-mode') to give the keyboard back to Emacs."
+  (interactive)
+  (unless (require 'eat nil t)
+    (user-error "herdr-tui needs the `eat' package"))
+  (let ((buf (get-buffer "*herdr-tui*")))
+    (if (and buf (get-buffer-process buf))
+        (pop-to-buffer buf)
+      (with-current-buffer (eat-make "herdr-tui" herdr-executable)
+        (eat-char-mode)
+        (pop-to-buffer (current-buffer))))))
 
 (defun herdr-start-agent (name command)
   "Start a new agent NAME running COMMAND (split on whitespace)."
