@@ -159,7 +159,7 @@ Uses `eat' when available, else `term'.  Detach with the herdr detach key
 \(C-b q by default); the pane keeps running on the server."
   (interactive (list (herdr--target)))
   (let ((name (format "herdr:%s" target))
-        (args (list "agent" "attach" "--takeover" target)))
+        (args (list "agent" "attach" target "--takeover")))
     (pop-to-buffer
      (if (require 'eat nil t)
          (apply #'eat-make name herdr-executable nil args)
