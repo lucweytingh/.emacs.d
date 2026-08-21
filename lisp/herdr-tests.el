@@ -1,7 +1,7 @@
 ;;; herdr-tests.el --- Tests for herdr.el -*- lexical-binding: t; -*-
 
 ;; Run:
-;;   emacs -Q --batch -l herdr.el -l herdr-tests.el -f ert-run-tests-batch-and-exit
+;;   emacs -Q --batch -l lisp/herdr.el -l lisp/herdr-tests.el -f ert-run-tests-batch-and-exit
 ;;
 ;; Most tests use a mock `herdr' script (no server needed).  The live test
 ;; skips itself when no herdr server is reachable.
