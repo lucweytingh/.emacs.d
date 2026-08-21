@@ -2393,7 +2393,10 @@ The user is prompted to choose from the available projects in the demos folder."
     (define-key eat-semi-char-mode-map (kbd "M-x") 'counsel-M-x)
     (define-key eat-semi-char-mode-map (kbd "C-x k") 'kill-buffer)
     (define-key eat-semi-char-mode-map (kbd "C-g") 'claude-code-ide-send-escape)
-    (setq eat-default-cursor-type '(bar . 2))
+    ;; must be a 3-list (CURSOR-ON BLINK-FREQ CURSOR-OFF); a bare (bar . 2)
+    ;; crashes eat's output timer on every cursor restyle (TUIs do this
+    ;; constantly), freezing rendering mid-frame
+    (setq eat-default-cursor-type '((bar . 2) nil nil))
 
     )
 
