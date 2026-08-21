@@ -15,12 +15,17 @@
 ;;; Code:
 
 (require 'tabulated-list)
+(require 'cl-lib)
 (require 'json)
 (require 'subr-x)
 (require 'term)
 
 (declare-function eat-make "eat")
 (declare-function eat-char-mode "eat")
+(defvar eat-minimum-latency)
+(defvar eat-maximum-latency)
+(defvar eat-char-mode-map)
+(defvar eat-semi-char-mode-map)
 
 (defgroup herdr nil
   "Native overview for the herdr agent runtime."
@@ -96,7 +101,9 @@ Keys: :target :ws :name :kind :status :cwd."
   "s"   #'herdr-send
   "f"   #'herdr-focus
   "t"   #'herdr-tui
-  "+"   #'herdr-start-agent)
+  "+"   #'herdr-start-agent
+  "C-M-n" #'herdr-next-agent
+  "C-M-p" #'herdr-prev-agent)
 
 (define-derived-mode herdr-list-mode tabulated-list-mode "Herdr"
   "Overview of herdr panes/agents.  RET attaches to the agent at point."
@@ -155,18 +162,88 @@ Keys: :target :ws :name :kind :status :cwd."
   "Pane id (agent target) on the current overview line."
   (or (tabulated-list-get-id) (user-error "No herdr agent on this line")))
 
+(defvar-local herdr--attach-target nil
+  "Agent target this eat buffer is attached to, or nil for the full TUI.")
+
+(defun herdr--eat-tune ()
+  "Tune the current eat buffer for herdr.
+Raises eat's latency so a full ratatui frame accumulates per redisplay --
+eat lacks synchronized-update (DEC 2026) support, so with the default 8ms
+latency herdr's row-by-row repaints show as visible tearing.  Also binds
+C-M-n/C-M-p to agent cycling, overriding eat's pass-through keymaps
+buffer-locally."
+  (setq-local eat-minimum-latency 0.033
+              eat-maximum-latency 0.1)
+  ;; Override both eat input modes with our two keys, keeping the rest.
+  (setq-local minor-mode-overriding-map-alist
+              (mapcar (lambda (mode)
+                        (let ((map (make-sparse-keymap)))
+                          (set-keymap-parent
+                           map (symbol-value
+                                (pcase mode
+                                  ('eat--char-mode 'eat-char-mode-map)
+                                  ('eat--semi-char-mode 'eat-semi-char-mode-map))))
+                          (define-key map (kbd "C-M-n") #'herdr-next-agent)
+                          (define-key map (kbd "C-M-p") #'herdr-prev-agent)
+                          (cons mode map)))
+                      '(eat--char-mode eat--semi-char-mode))))
+
+(defun herdr--agent-targets ()
+  "Pane ids of live agents, in stable order."
+  (let ((ids (mapcar (lambda (a) (alist-get 'pane_id a))
+                     (alist-get 'agents
+                                (alist-get 'snapshot (herdr--call "api" "snapshot"))))))
+    (or (sort ids #'string<) (user-error "herdr: no agents running"))))
+
+(defun herdr--cycle-target (current direction)
+  "Next (DIRECTION 1) or previous (-1) agent target after CURRENT, wrapping."
+  (let* ((targets (herdr--agent-targets))
+         (idx (or (cl-position current targets :test #'equal) -1)))
+    (nth (mod (+ idx direction) (length targets)) targets)))
+
+(defun herdr--goto-agent (direction)
+  "Move to the next/previous agent per DIRECTION, context-sensitively.
+In an attach buffer, reattach this window to the neighboring agent.  In the
+TUI or overview, focus it in herdr / move point to its row."
+  (cond
+   (herdr--attach-target
+    (let ((next (herdr--cycle-target herdr--attach-target direction))
+          (old (current-buffer)))
+      (herdr-attach next)
+      (when-let ((proc (get-buffer-process old))) (delete-process proc))
+      (kill-buffer old)))
+   ((derived-mode-p 'herdr-list-mode)
+    (forward-line direction))
+   (t
+    (let* ((snap (alist-get 'snapshot (herdr--call "api" "snapshot")))
+           (focused (alist-get 'focused_pane_id snap)))
+      (herdr--call "agent" "focus" (herdr--cycle-target focused direction))))))
+
+(defun herdr-next-agent ()
+  "Switch to the next agent."
+  (interactive)
+  (herdr--goto-agent 1))
+
+(defun herdr-prev-agent ()
+  "Switch to the previous agent."
+  (interactive)
+  (herdr--goto-agent -1))
+
 (defun herdr-attach (target)
   "Attach to herdr TARGET full-screen in a terminal buffer.
 Uses `eat' when available, else `term'.  Detach with the herdr detach key
 \(C-b q by default); the pane keeps running on the server."
   (interactive (list (herdr--target)))
-  (let ((name (format "herdr:%s" target))
-        (args (list "agent" "attach" target "--takeover")))
-    (pop-to-buffer
-     (if (require 'eat nil t)
-         (apply #'eat-make name herdr-executable nil args)
-       (let ((buf (apply #'make-term name herdr-executable nil args)))
-         (with-current-buffer buf (term-mode) (term-char-mode) buf))))))
+  (let* ((name (format "herdr:%s" target))
+         (args (list "agent" "attach" target "--takeover"))
+         (buf (if (require 'eat nil t)
+                  (apply #'eat-make name herdr-executable nil args)
+                (let ((b (apply #'make-term name herdr-executable nil args)))
+                  (with-current-buffer b (term-mode) (term-char-mode) b)))))
+    (with-current-buffer buf
+      (setq herdr--attach-target target)
+      (when (featurep 'eat) (herdr--eat-tune)))
+    (pop-to-buffer buf)))
 
 (defun herdr-send (target text)
   "Send literal TEXT to herdr TARGET without attaching."
@@ -196,6 +273,7 @@ Press M-RET (`eat-semi-char-mode') to give the keyboard back to Emacs."
         (pop-to-buffer buf)
       (with-current-buffer (eat-make "herdr-tui" herdr-executable)
         (eat-char-mode)
+        (herdr--eat-tune)
         (pop-to-buffer (current-buffer))))))
 
 (defun herdr-start-agent (name command)

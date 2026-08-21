@@ -113,6 +113,19 @@ as unknown-option).  Skipped when no herdr server is reachable."
       (should (string-match-p "not found" (cadr err)))
       (should-not (string-match-p "unknown option" (cadr err))))))
 
+(ert-deftest herdr-cycle-target-orders-and-wraps ()
+  "C-M-n/C-M-p cycle agents in stable order and wrap at the ends."
+  (herdr-tests--with-mock
+      (concat "{\"id\":\"i\",\"result\":{\"snapshot\":{\"agents\":["
+              "{\"pane_id\":\"w1:p4\"},{\"pane_id\":\"w1:p2\"},{\"pane_id\":\"w1:p3\"}],"
+              "\"panes\":[],\"workspaces\":[]},\"type\":\"session_snapshot\"}}")
+    (should (equal (herdr--cycle-target "w1:p2" 1) "w1:p3"))
+    (should (equal (herdr--cycle-target "w1:p3" 1) "w1:p4"))
+    (should (equal (herdr--cycle-target "w1:p4" 1) "w1:p2"))   ; wrap forward
+    (should (equal (herdr--cycle-target "w1:p2" -1) "w1:p4"))  ; wrap backward
+    ;; unknown current (e.g. TUI focused on a non-agent pane) -> first agent
+    (should (equal (herdr--cycle-target "w1:p9" 1) "w1:p2"))))
+
 (ert-deftest herdr-tui-requires-eat ()
   "Without eat available, `herdr-tui' fails with a readable error."
   (cl-letf (((symbol-function 'require) (lambda (&rest _) nil)))
@@ -137,6 +150,11 @@ Skipped without eat or a reachable herdr server."
             (should (eq (key-binding (kbd "C-x")) 'eat-self-input))
             (should (eq (key-binding (kbd "C-s")) 'eat-self-input))
             (should (eq (key-binding (kbd "C-M-m")) 'eat-semi-char-mode))
+            ;; agent cycling overrides eat's pass-through, nothing else
+            (should (eq (key-binding (kbd "C-M-n")) 'herdr-next-agent))
+            (should (eq (key-binding (kbd "C-M-p")) 'herdr-prev-agent))
+            ;; latency raised so full ratatui frames render per redisplay
+            (should (>= eat-minimum-latency 0.033))
             (should (get-buffer-process (current-buffer))))
         (let ((proc (get-buffer-process "*herdr-tui*")))
           (when proc (delete-process proc)))

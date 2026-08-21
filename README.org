@@ -1967,7 +1967,8 @@ Code lives in =herdr.el=; loaded lazily so it costs nothing until =C-c H=.
 =M-x herdr-tui= (or =t=) opens the whole herdr TUI in eat char mode: the
 fork's =[emacs] enabled= layer means herdr itself speaks Emacs — =C-x=
 chords for tabs/splits, =C-s= isearch, =C-y/M-y= kill ring, =C-x [= TEXT
-mode. =M-RET= hands the keyboard back to Emacs.
+mode. =M-RET= hands the keyboard back to Emacs. In any herdr buffer
+=C-M-n= / =C-M-p= jump to the next/previous agent.
 #+BEGIN_SRC emacs-lisp
 (require 'server)
 (unless (server-running-p) (server-start))
