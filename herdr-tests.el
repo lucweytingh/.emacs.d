@@ -153,6 +153,8 @@ Skipped without eat or a reachable herdr server."
             ;; agent cycling overrides eat's pass-through, nothing else
             (should (eq (key-binding (kbd "C-M-n")) 'herdr-next-agent))
             (should (eq (key-binding (kbd "C-M-p")) 'herdr-prev-agent))
+            ;; M-x stays Emacs's, not herdr's palette
+            (should (eq (key-binding (kbd "M-x")) 'execute-extended-command))
             ;; latency raised so full ratatui frames render per redisplay
             (should (>= eat-minimum-latency 0.033))
             (should (get-buffer-process (current-buffer))))

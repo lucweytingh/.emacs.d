@@ -185,6 +185,9 @@ buffer-locally."
                                   ('eat--semi-char-mode 'eat-semi-char-mode-map))))
                           (define-key map (kbd "C-M-n") #'herdr-next-agent)
                           (define-key map (kbd "C-M-p") #'herdr-prev-agent)
+                          ;; keep M-x as Emacs's, not herdr's palette; herdr
+                          ;; commands remain reachable via their chords
+                          (define-key map (kbd "M-x") #'execute-extended-command)
                           (cons mode map)))
                       '(eat--char-mode eat--semi-char-mode))))
 
