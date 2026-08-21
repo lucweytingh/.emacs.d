@@ -20,7 +20,8 @@
 (require 'subr-x)
 (require 'term)
 
-(declare-function eat-make "eat")
+(declare-function eat-mode "eat")
+(declare-function eat-exec "eat")
 (declare-function eat-char-mode "eat")
 (defvar eat-minimum-latency)
 (defvar eat-maximum-latency)
@@ -102,6 +103,7 @@ Keys: :target :ws :name :kind :status :cwd."
   "f"   #'herdr-focus
   "t"   #'herdr-tui
   "+"   #'herdr-start-agent
+  "?"   #'herdr-help
   "C-M-n" #'herdr-next-agent
   "C-M-p" #'herdr-prev-agent)
 
@@ -154,7 +156,33 @@ Keys: :target :ws :name :kind :status :cwd."
     (herdr-list-mode)
     (herdr-refresh)
     (herdr--install-timer)
-    (pop-to-buffer (current-buffer))))
+    (pop-to-buffer (current-buffer)))
+  (herdr-help))
+
+;;;; Help window
+
+(defconst herdr--help-text
+  (concat
+   "Overview   RET attach   s send   f focus   +  start agent   t full TUI\n"
+   "           g refresh    ?  this help      C-M-n/C-M-p next/prev agent\n"
+   "Terminal   M-RET keyboard back to Emacs   C-b q detach   M-x stays Emacs\n"
+   "TUI keys   C-x chords tabs/splits  C-s isearch  C-x [ TEXT mode  C-M-o open at point\n"
+   "Lifecycle  agents survive detach; `our-herdr server stop' is the only kill\n")
+  "Contents of the herdr help window.")
+
+(defun herdr-help ()
+  "Show a small window listing herdr commands."
+  (interactive)
+  (with-current-buffer (get-buffer-create "*herdr-help*")
+    (let ((inhibit-read-only t))
+      (erase-buffer)
+      (insert herdr--help-text)
+      (goto-char (point-min)))
+    (special-mode)
+    (display-buffer (current-buffer)
+                    '(display-buffer-at-bottom
+                      (window-height . fit-window-to-buffer)
+                      (preserve-size . (nil . t))))))
 
 ;;;; Actions
 
@@ -232,6 +260,19 @@ TUI or overview, focus it in herdr / move point to its row."
   (interactive)
   (herdr--goto-agent -1))
 
+(defun herdr--eat-spawn (name args)
+  "Run herdr with ARGS in eat buffer *NAME*, displayed before exec.
+Displaying first is what makes eat size the terminal to the real window;
+exec-then-display leaves the process at eat's 80x24 default until the
+window changes size.  Returns the buffer, current."
+  (let ((buf (get-buffer-create (format "*%s*" name))))
+    (with-current-buffer buf
+      (unless (eq major-mode 'eat-mode) (eat-mode))
+      (pop-to-buffer buf)
+      (eat-exec buf name herdr-executable nil args)
+      (herdr--eat-tune))
+    buf))
+
 (defun herdr-attach (target)
   "Attach to herdr TARGET full-screen in a terminal buffer.
 Uses `eat' when available, else `term'.  Detach with the herdr detach key
@@ -240,12 +281,11 @@ Uses `eat' when available, else `term'.  Detach with the herdr detach key
   (let* ((name (format "herdr:%s" target))
          (args (list "agent" "attach" target "--takeover"))
          (buf (if (require 'eat nil t)
-                  (apply #'eat-make name herdr-executable nil args)
+                  (herdr--eat-spawn name args)
                 (let ((b (apply #'make-term name herdr-executable nil args)))
                   (with-current-buffer b (term-mode) (term-char-mode) b)))))
     (with-current-buffer buf
-      (setq herdr--attach-target target)
-      (when (featurep 'eat) (herdr--eat-tune)))
+      (setq herdr--attach-target target))
     (pop-to-buffer buf)))
 
 (defun herdr-send (target text)
@@ -274,10 +314,8 @@ Press M-RET (`eat-semi-char-mode') to give the keyboard back to Emacs."
   (let ((buf (get-buffer "*herdr-tui*")))
     (if (and buf (get-buffer-process buf))
         (pop-to-buffer buf)
-      (with-current-buffer (eat-make "herdr-tui" herdr-executable)
-        (eat-char-mode)
-        (herdr--eat-tune)
-        (pop-to-buffer (current-buffer))))))
+      (with-current-buffer (herdr--eat-spawn "herdr-tui" nil)
+        (eat-char-mode)))))
 
 (defun herdr-start-agent (name command)
   "Start a new agent NAME running COMMAND (split on whitespace)."

@@ -1960,9 +1960,10 @@ Native overview for the [[https://herdr.dev][herdr]] agent runtime, driving a
 running herdr server through its socket API (=our-herdr api/agent ...=).
 Code lives in =lisp/herdr.el=; loaded lazily so it costs nothing until =C-c H=.
 
-=C-c H= opens a live table of agents (name, kind, status, cwd). On a row:
-=RET= attach to that agent full-screen in eat, =s= send text, =f= focus,
-=+= start an agent, =t= full multiplexer TUI, =g= refresh.
+=C-c H= opens a live table of agents (name, kind, status, cwd) plus a small
+help window listing every command (=?= reopens it). On a row: =RET= attach
+to that agent full-screen in eat, =s= send text, =f= focus, =+= start an
+agent, =t= full multiplexer TUI, =g= refresh.
 
 =M-x herdr-tui= (or =t=) opens the whole herdr TUI in eat char mode: the
 fork's =[emacs] enabled= layer means herdr itself speaks Emacs — =C-x=

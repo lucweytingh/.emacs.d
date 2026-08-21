@@ -126,6 +126,23 @@ as unknown-option).  Skipped when no herdr server is reachable."
     ;; unknown current (e.g. TUI focused on a non-agent pane) -> first agent
     (should (equal (herdr--cycle-target "w1:p9" 1) "w1:p2"))))
 
+(ert-deftest herdr-eat-spawn-displays-buffer-before-exec ()
+  "Regression: the buffer must be shown in a window BEFORE eat-exec runs.
+eat sizes the terminal at exec from the displaying window; exec-then-display
+left the TUI at eat's 80x24 default (tiny corner render) until a resize."
+  (let ((eat-dir (expand-file-name "~/.emacs.d/straight/build/eat")))
+    (when (file-directory-p eat-dir) (add-to-list 'load-path eat-dir)))
+  (skip-unless (require 'eat nil t))
+  (let (window-at-exec)
+    (cl-letf (((symbol-function 'eat-exec)
+               (lambda (buffer &rest _)
+                 (setq window-at-exec (get-buffer-window buffer)))))
+      (unwind-protect
+          (save-window-excursion
+            (herdr--eat-spawn "herdr-spawn-test" nil)
+            (should (windowp window-at-exec)))
+        (kill-buffer "*herdr-spawn-test*")))))
+
 (ert-deftest herdr-tui-requires-eat ()
   "Without eat available, `herdr-tui' fails with a readable error."
   (cl-letf (((symbol-function 'require) (lambda (&rest _) nil)))
