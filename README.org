@@ -1992,7 +1992,7 @@ Register DIR with projectile, focus the frame so search commands
 \(projectile-find-file, consult-grep, ...) operate on it, and pop
 `magit-status' to show which files were edited."
   (interactive "DWorkspace: ")
-  (setq dir (file-name-as-directory (expand-file-name dir)))
+  (setq dir (file-name-as-directory (expand-file-name (string-trim dir))))
   (projectile-add-known-project dir)
   (dired dir)
   (select-frame-set-input-focus (selected-frame))
