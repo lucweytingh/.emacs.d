@@ -1973,6 +1973,32 @@ On a row: =RET= view output, =s= send text, =f= focus, =a= attach in a term,
 (global-set-key (kbd "C-c H") #'herdr-status)
 #+END_SRC
 
+** open workspace
+Open a directory (e.g. a Conductor workspace) into the running frame with
+projectile pointed at it, so search commands act on that project immediately.
+Projectile derives the root from =default-directory=, so opening dired there is
+enough; we also register it and grab focus. Alongside, pop =magit-status= for
+the workspace so you can see which files were edited.
+
+From a shell (bundle path since =emacsclient= isn't on PATH):
+: cw() { /Applications/Emacs.app/Contents/MacOS/bin/emacsclient -e "(open-workspace \"${1:-$PWD}\")"; }
+: cw /Users/luc/conductor/workspaces/mech/mock-build-no-registration
+Then use your normal search keys (=C-x C-f= projectile-find-file, =M-s g=
+consult-grep) — they run against the workspace.
+#+BEGIN_SRC emacs-lisp
+(defun open-workspace (dir)
+  "Open DIR in this frame as the active projectile project.
+Register DIR with projectile, focus the frame so search commands
+\(projectile-find-file, consult-grep, ...) operate on it, and pop
+`magit-status' to show which files were edited."
+  (interactive "DWorkspace: ")
+  (setq dir (file-name-as-directory (expand-file-name (string-trim dir))))
+  (projectile-add-known-project dir)
+  (dired dir)
+  (select-frame-set-input-focus (selected-frame))
+  (magit-status dir))
+#+END_SRC
+
 ** dwim-shell-command
 #+BEGIN_SRC emacs-lisp
 (message "[README] Loading ** dwim shell command")
