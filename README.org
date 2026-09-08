@@ -1968,8 +1968,8 @@ On a row: =RET= view output, =s= send text, =f= focus, =a= attach in a term,
 (require 'server)
 (unless (server-running-p) (server-start))
 
-(add-to-list 'load-path (directory-file-name user-emacs-directory))
-(autoload 'herdr-status "herdr" "Open the herdr agent dashboard." t)
+(autoload 'herdr-status (expand-file-name "herdr" user-emacs-directory)
+  "Open the herdr agent dashboard." t)
 (global-set-key (kbd "C-c H") #'herdr-status)
 #+END_SRC
 
