@@ -66,40 +66,13 @@
 (message "[init.el] Loading org-mode...")
 (require 'org)
 
-;; Function that compiles org to el
-(defun org-to-el (&optional org-file)
-  "Export the specified Org file (or current buffer if none specified) to Emacs Lisp."
-  (interactive)
-  (let* ((org-file (or org-file (buffer-file-name)))
-         (output-file (concat (file-name-sans-extension org-file) ".el")))
-    (if (file-exists-p output-file)
-        (message "%s already exists. No need to export." output-file)
-      (with-current-buffer (find-file-noselect org-file)
-        (org-babel-tangle)
-        (write-region (point-min) (point-max) output-file)
-        (message "Exported Org file to %s" output-file)))))
-
 (use-package exec-path-from-shell
   :straight t)
 
 (when (memq window-system '(mac ns x))
   (exec-path-from-shell-initialize))
 
-(message "[init.el] Checking README.el status...")
-;; Check if README.el exists, if not, generate it from README.org
-(let ((readme-org (concat user-emacs-directory "README.org"))
-      (readme-el (concat user-emacs-directory "README.el")))
-  (if (file-exists-p readme-el)
-      (message "README.el found, no generation needed")
-    (message "README.el not found, generating from README.org...")
-    (condition-case err
-        (org-to-el readme-org)
-      (error
-       (message "Failed to generate README.el: %s" err)
-       (message "Please ensure org-mode is available")))))
-(message "[init.el] README.el check complete")
-
-;; Load README.org - my Emacs configuration
+;; Load README.org (org-babel-load-file tangles to README.el itself when needed) - my Emacs configuration
 (message "[init.el] Loading README")
 (condition-case err
     (org-babel-load-file (concat user-emacs-directory "README.org"))
