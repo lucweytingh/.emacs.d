@@ -1977,33 +1977,26 @@ On a row: =RET= view output, =s= send text, =f= focus, =a= attach in a term,
 Open a directory (e.g. a Conductor workspace) into the running frame with
 projectile pointed at it, so search commands act on that project immediately.
 Projectile derives the root from =default-directory=, so opening dired there is
-enough; we also register it and grab focus. Alongside, pop a =magit-diff=
-against the base ref showing which files were edited — this is =git diff
-origin/master= (committed + uncommitted tracked changes), and unlike
-=magit-status= it renders a single diff with no slow dashboard sections.
+enough; we also register it and grab focus. Alongside, pop =magit-status= for
+the workspace so you can see which files were edited.
 
 From a shell (bundle path since =emacsclient= isn't on PATH):
 : cw() { /Applications/Emacs.app/Contents/MacOS/bin/emacsclient -e "(open-workspace \"${1:-$PWD}\")"; }
 : cw /Users/luc/conductor/workspaces/mech/mock-build-no-registration
 Then use your normal search keys (=C-x C-f= projectile-find-file, =M-s g=
-consult-grep) — they run against the workspace. In the diff buffer, =RET=
-visits the file under point.
+consult-grep) — they run against the workspace.
 #+BEGIN_SRC emacs-lisp
-(defvar open-workspace-base "origin/master"
-  "Ref to diff a workspace against when listing edited files.")
-
 (defun open-workspace (dir)
   "Open DIR in this frame as the active projectile project.
 Register DIR with projectile, focus the frame so search commands
-\(projectile-find-file, consult-grep, ...) operate on it, and pop a
-`magit-diff' of edited files against `open-workspace-base'."
+\(projectile-find-file, consult-grep, ...) operate on it, and pop
+`magit-status' to show which files were edited."
   (interactive "DWorkspace: ")
   (setq dir (file-name-as-directory (expand-file-name dir)))
   (projectile-add-known-project dir)
   (dired dir)
   (select-frame-set-input-focus (selected-frame))
-  (let ((default-directory dir))
-    (magit-diff-range open-workspace-base)))
+  (magit-status dir))
 #+END_SRC
 
 ** dwim-shell-command
