@@ -801,6 +801,17 @@ Project management and navigation.
   ("C-x C-f" . projectile-find-file))
 #+END_SRC
 
+** dumb-jump (M-. everywhere)
+Makes M-. (xref-find-definitions) work in any project without a TAGS
+file or language server, using git-grep/grep under the hood.
+
+#+BEGIN_SRC emacs-lisp
+(use-package dumb-jump
+  :straight t
+  :config
+  (add-hook 'xref-backend-functions #'dumb-jump-xref-activate))
+#+END_SRC
+
 ** consult
 TODO: check keybindings
 #+BEGIN_SRC emacs-lisp
